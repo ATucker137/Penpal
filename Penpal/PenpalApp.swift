@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct PenpalApp: App {
+    @StateObject private var userSession = UserSession()
     var body: some Scene {
         WindowGroup {
             ContentView()
