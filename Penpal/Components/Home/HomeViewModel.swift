@@ -39,7 +39,7 @@ class HomeViewModel: ObservableObject {
     
     
     // MARK: - Filter the profiles you want to see in home tab
-    func filterPenpalsInHome{
+    func filterPenpalsInHome () {
         
     }
     

@@ -4,7 +4,6 @@
 //
 //  Created by Austin William Tucker on 11/29/24.
 //
-//  The service layer handles Firestore integration. Fetches and saves calendarEvents.
 
 import Foundation
 import Firebase
@@ -15,13 +14,15 @@ protocol CalendarServiceProtocol {
     func fetchEvents(for userId: String, date: Date, completion: @escaping (Result<[CalendarEvent], Error>) -> Void)
 }
 
+
+// This all needs to be looked over
 class MyCalendarService: CalendarServiceProtocol {
     private let db = Firestore.firestore()
     
     // NOTE: Much of this might not be needed because its basically a bunch of Meetings
     
     
-    // MARK: - Fetch Events Through Firestore
+    // MARK: - Fetch Calendar Through Firestore
     func fetchMyCalendar(for userId: String, date: Date, completion: @escaping (Result<[MyCalendar], Error>) -> Void) {
         
         // Ensure user ID is valid
@@ -64,19 +65,14 @@ class MyCalendarService: CalendarServiceProtocol {
                 completion(.failure(error))
             }
     }
+
     
-    // MARK: - Delete Event Through Firestore
-    // Note there Shouldnt be any Deletion of MyCalendar
-    func delete(_ id: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        db.collection(collectionPath).document(id).delete { error in
-            if let error = error {
-                completion(.failure(error))
-            } else {
-                completion(.success(()))
-            }
-        }
-    }
+    // MARK: - Update Calendar Through Firestore
     
-    // MARK: - Update Evnt Through Firestore
+    
+    
+    
+    // MARK: - Add Calendar Through Firestore
+    // Needs To Make Sure This Isnt A time thats already there
 
 }

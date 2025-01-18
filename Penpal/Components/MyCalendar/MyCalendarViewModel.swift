@@ -17,7 +17,7 @@ class MyCalendarViewModel: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published var events: [Meeting] = []
+    @Published var meeting: [Meeting] = [] // But Now Since Not using Meetings and USing IDs this might be more complex?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
@@ -29,43 +29,41 @@ class MyCalendarViewModel: ObservableObject {
     
     init(service: CalendarService = CalendarService()) {
         self.service = service
-        fetchEvents()
+        fetchCalendar()
     }
     
     // MARK: - Fetch Events
-    
-    func fetchEvents() {
+    func fetchCalendar() {
         isLoading = true
-        service.fetchEvents { [weak self] result in
+        service.fetchCalendar { [weak self] result in
             DispatchQueue.main.async {
                 self?.isLoading = false
                 switch result {
-                case .success(let events):
-                    self?.events = events
+                case .success(let meeting):
+                    self?.meeting = meeting
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
             }
         }
     }
+    
+
     
     // MARK: - Save Event
-    
-    func saveEvent(_ event: CalendarEvent) {
-        isLoading = true
-        service.saveEvent(event) { [weak self] result in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                switch result {
-                case .success:
-                    self?.fetchEvents() // Refresh the list of events after saving
-                case .failure(let error):
-                    self?.errorMessage = error.localizedDescription
-                }
-            }
-        }
+    func saveCalendar(_ meeting: Meeting) {
+        
     }
     
-    // MARK: - Delete Event
+    // MARK: - Invitation Handling
+    func acceptInvitation(_ meeting: Meeting) {
+        // TODO: Implement invitation acceptance logic
+    }
+    
+    func declineInvitation(_ meeting: Meeting) {
+        // TODO: Implement invitation decline logic
+    }
+
+    
     
 }

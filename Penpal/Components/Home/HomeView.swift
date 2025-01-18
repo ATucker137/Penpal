@@ -59,7 +59,9 @@ struct HomeView: View {
 }
 
 struct HomeViews_Previews: PreviewProvider {
+    /*
     static var previews: some View {
         //HomeView(profileViewModel: <#T##ProfileViewModel#>, quizViewModel: <#T##_#>, messageViewModel: <#T##_#>, homeViewModel: <#T##HomeViewModel#>)
     }
+     */
 }

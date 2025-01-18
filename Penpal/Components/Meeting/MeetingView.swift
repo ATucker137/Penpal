@@ -84,7 +84,7 @@ struct MeetingView: View {
     
     struct MeetingView_Previews: PreviewProvider {
         static var previews: some View {
-            MeetingView(userSession: <#T##UserSession#>, meetingId: <#T##String#>)
+            return MeetingView(userSession: <#T##UserSession#>, meetingId: <#T##String#>)
         }
     }
 }
