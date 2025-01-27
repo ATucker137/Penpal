@@ -95,4 +95,16 @@ class MeetingViewModel: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Accepting Meeting Invitation
+    func acceptMeeting(userId: String, meetingId: String) {
+        
+        // Accept The Meeting Given The User
+        
+    }
+    
+    // MARK: - Declining Meeting Invitation
+    func declineMeeting(meetingId: String) {
+        // Basically Change the Meeting to Declined
+    }
 }

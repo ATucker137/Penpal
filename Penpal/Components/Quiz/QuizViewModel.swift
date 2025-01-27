@@ -66,7 +66,7 @@ class QuizViewModel {
         }
     }
     
-    // MARK: - Save Quiz
+    // MARK: - Save Quiz  The Relation Between Update Quiz And Save Quiz Should Be Addresses
     func saveQuiz() {
         isLoading = false
         service.saveQuiz {[weak self] result in
@@ -80,6 +80,20 @@ class QuizViewModel {
                 }
             }
         }
+    }
+    
+    // MARK: - Send Quiz Should Be Able to Send Specific Quiz To The Penpal They Want Maybe
+    // MARK: - This should also probably be a part of the Service Layer As Well?
+    // Arguments Needed
+    // The QuizID, the Penpal ID, the User ID
+    func sendQuiz() {
+        
+    }
+    
+    // MARK: - receive Quiz I guess should be Very Similar I guess to Quiz Should Be Able to Send Specific Quiz To The Penpal They Want Maybe
+    // MARK: - This should also probably be a part of the Service Layer As Well?
+    func receiveQuiz() {
+        
     }
     
 }

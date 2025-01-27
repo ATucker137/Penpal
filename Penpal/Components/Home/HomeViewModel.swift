@@ -19,7 +19,15 @@ class HomeViewModel: ObservableObject {
     @Published var profile: Profile
     @Published var quizzes: [Quiz] = []
     @Published var recentMessages: [Messages] = []
+    @Published var calendarViewModel: MyCalendarViewModel
     @Published var isLoading: Bool = false
+    
+    
+    // MARK: - Initializer
+        init(profile: Profile, calendarViewModel: MyCalendarViewModel = MyCalendarViewModel()) {
+            self.profile = profile
+            self.calendarViewModel = calendarViewModel // Initialize MyCalendarViewModel
+        }
     
     // Look More into this
     // MARK: - Fetch All Home Data Needed
@@ -38,46 +46,27 @@ class HomeViewModel: ObservableObject {
     
     
     
-    // MARK: - Filter the profiles you want to see in home tab
-    func filterPenpalsInHome () {
+    // MARK: - Filter the Penpals you want to see in home tab
+    func filterPenpalsInHome(criteria: [String]) -> [PenpalsModel] {
+        
+        // TODO: - Create 'fetchAllPenpals'
+        let allUsersPenpals: [PenpalsModel] = fetchAllPenpals()
+        
+        // Based off the criteria, pull
+        /*
+        let filteredPenpals = allUsersPenpals.filter {
+            penpal in
+            
+        }
+         */
         
     }
     
+    //MARK: - Possible Functions That Might Be Needed In Future
     
-    //MARK: - Most of these function will be common with all of their respective tabs
+    // Some Kind Of New Notifications Thing
     
+
     
-    //MARK: - Click Calendar Button
-    func clickCalendarButton(){
-        
-    }
-    
-    // MARK: - This should go to the specific user though as well
-    func clickSendMeetingInvite(){
-        
-    }
-    
-    // MARK: - This should go to the specific user though as well
-    func clickConversationWithPenpalButton(){
-        
-    }
-    
-    // MARK: - Click the Penpal Tab, will navigate to Penpal Tab
-    func clickPenpalTab() {
-        
-    }
-    // MARK: - Click the Message Tab, will navigate to Message Tab
-    func clickMessageTab() {
-        
-    }
-    
-    // MARK: - Click the Study Tab, will navigate to Study Tab
-    func clickStudyTab() {
-        
-    }
-    
-    // MARK: - Click the Profile Tab, will navigate to Profile Tab
-    func clickProfileTab() {
-        
-    }
+
 }

@@ -16,18 +16,20 @@ import Combine
 class MyCalendarViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    
+    //TODO: - Should this contain Meeting objects or Meeting id"S
     @Published var meeting: [Meeting] = [] // But Now Since Not using Meetings and USing IDs this might be more complex?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var meetingViewModel: MeetingViewModel
     
     // MARK: - Private Properties
     
-    private let service: CalendarService
+    private let userId: String
+    private let service: MyCalendarService
     
     // MARK: - Initializer
     
-    init(service: CalendarService = CalendarService()) {
+    init(service: MyCalendarService = MyCalendarService()) {
         self.service = service
         fetchCalendar()
     }
@@ -56,14 +58,37 @@ class MyCalendarViewModel: ObservableObject {
     }
     
     // MARK: - Invitation Handling
-    func acceptInvitation(_ meeting: Meeting) {
-        // TODO: Implement invitation acceptance logic
+    // Add the invitation depending on the user id
+    // TODO: - Need to add to Service Layer
+    func acceptMeeting(meetingId: String) {
+        // Delegate the action to MeetingViewModel
+        meetingViewModel.acceptMeeting(userId: userId, meetingId: meetingId){ [weak self] result in
+            switch result {
+            case .success:
+                // Optionally handle any UI updates or refresh calendar here
+                self?.fetchCalendar()  // Re-fetch calendar or update state
+            case .failure(let error):
+                self?.errorMessage = error.localizedDescription
+            }
+        }
     }
     
+    // Add the invitation depending on user id
+    // TODO: - Need to add to Service Layer
+    // Doesn't really need to be
     func declineInvitation(_ meeting: Meeting) {
         // TODO: Implement invitation decline logic
+        
+        // For The User that we have
+        
+        // Append the Meeting To The Users Calendar
+        
+        // Changing the status as wellfrom pending to declined
+        
+        
     }
-
+    
+    
     
     
 }

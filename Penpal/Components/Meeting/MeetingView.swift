@@ -40,6 +40,8 @@ struct MeetingView: View {
     @EnvironmentObject var userSession: UserSession
     //Acts as a back button
     @Environment(\.dismiss) private var dismiss // Dismiss the current view
+    @Binding var selectedTab: Tab
+
     let meetingId: String
     
     var body: some View {

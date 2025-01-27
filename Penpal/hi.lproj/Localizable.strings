@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "यात्रा";
+"sports" = "खेल";
+"culture" = "संस्कृति";
+"food" = "भोजन";
+"movies" = "फिल्में";
+"work" = "कार्य";
+"art" = "कला";
+
+//MARK: -  Profile Centric
+"email" = "ईमेल";
+"phone_number" = "फोन नंबर";
+"description" = "विवरण";
+"first_name" = "प्रथम नाम";
+"last_name" = "अंतिम नाम";
+"country" = "देश";
+"language" = "भाषा";
+"proficiency" = "प्रवीणता स्तर";
+"goals" = "लक्ष्य";
+
+//MARK: -  Meeting Centric
+"title" = "शीर्षक";
+"description" = "विवरण";
+"link" = "बैठक लिंक";
+"status" = "स्थिति";
+"participants" = "सहभागी";
+
+//MARK: -  Months
+"january" = "जनवरी";
+"february" = "फ़रवरी";
+"march" = "मार्च";
+"april" = "अप्रैल";
+"may" = "मई";
+"june" = "जून";
+"july" = "जुलाई";
+"august" = "अगस्त";
+"september" = "सितंबर";
+"october" = "अक्टूबर";
+"november" = "नवंबर";
+"december" = "दिसंबर";
+
+//MARK: -  Days of the Week
+"monday" = "सोमवार";
+"tuesday" = "मंगलवार";
+"wednesday" = "बुधवार";
+"thursday" = "गुरुवार";
+"friday" = "शुक्रवार";
+"saturday" = "शनिवार";
+"sunday" = "रविवार";
+
+//MARK: - Tab Names
+"home_tab" = "होम";
+"study_tab" = "अध्यान";
+"penpal_tab" = "पेनपल";
+"profile_tab" = "प्रोफाइल";
+"messages_tab" = "संदेश";
+
+// MARK: - Calendar and Schedule
+"calendar" = "कैलेंडर";
+"schedule" = "कार्यसूची";
+"pending" = "पेंडिंग";
+"accepted" = "स्वीकृत";
+"declined" = "अस्वीकृत";
+
+// MARK: - Date And Time
+"date" = "तारीख";
+"time" = "समय";
+
+// MARK: - Hobbies Or Interests
+"interests" = "रुचियाँ";
+"music" = "संगीत";
+"reading" = "पढ़ाई";
+"tech" = "प्रौद्योगिकी";
+"writing" = "लेखन";
+
+// MARK: - Greetings
+"hey" = "नमस्ते";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "आपका ईमेल क्या है?";
+"askName" = "आपका नाम क्या है?";
+"askTimeZone" = "आपका समय क्षेत्र क्या है?";
+"askInterests" = "आपकी रुचियां क्या हैं?";
+"askNameStatement" = "यह आपकी Penpal प्रोफ़ाइल में दिखाई देगा।";
+"profilePicture" = "आपकी प्रोफ़ाइल तस्वीर";
+"allowNotifications" = "सूचनाओं की अनुमति दें";
+"notNow" = "अभी नहीं";
+"skip" = "छोड़ें";
+"languageInfo" = "भाषा जानकारी";
+"timeZoneStatement" = "समय क्षेत्र का चयन करें";
+"verifyEmail" = "अपना ईमेल सत्यापित करें";
+"verifyEmailStatement" = "हमने आपके ईमेल पर जो कोड भेजा है उसे दर्ज करें।";
+"changeEmail" = "ईमेल बदलें";
+"resendEmailStatement" = "कोड नहीं मिला?";
+"resend" = "पुनः भेजें";

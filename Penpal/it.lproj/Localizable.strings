@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "Viaggio";
+"sports" = "Sport";
+"culture" = "Cultura";
+"food" = "Cucina";
+"movies" = "Film";
+"work" = "Lavoro";
+"art" = "Arte";
+
+//MARK: -  Profile Centric
+"email" = "E-mail";
+"phone_number" = "Numero di telefono";
+"description" = "Descrizione";
+"first_name" = "Nome";
+"last_name" = "Cognome";
+"country" = "Paese";
+"language" = "Lingua";
+"proficiency" = "Livello di competenza";
+"goals" = "Obiettivi";
+
+//MARK: -  Meeting Centric
+"title" = "Titolo";
+"description" = "Descrizione";
+"link" = "Link della riunione";
+"status" = "Stato";
+"participants" = "Partecipanti";
+
+//MARK: -  Months
+"january" = "Gennaio";
+"february" = "Febbraio";
+"march" = "Marzo";
+"april" = "Aprile";
+"may" = "Maggio";
+"june" = "Giugno";
+"july" = "Luglio";
+"august" = "Agosto";
+"september" = "Settembre";
+"october" = "Ottobre";
+"november" = "Novembre";
+"december" = "Dicembre";
+
+//MARK: - Days of the Week
+"monday" = "Lunedì";
+"tuesday" = "Martedì";
+"wednesday" = "Mercoledì";
+"thursday" = "Giovedì";
+"friday" = "Venerdì";
+"saturday" = "Sabato";
+"sunday" = "Domenica";
+
+//MARK: - Tab Names
+"home_tab" = "Home";
+"study_tab" = "Studio";
+"penpal_tab" = "Penpal";
+"profile_tab" = "Profilo";
+"messages_tab" = "Messaggi";
+
+// MARK: - Calendar and Schedule
+"calendar" = "Calendario";
+"schedule" = "Programma";
+"pending" = "In sospeso";
+"accepted" = "Accettato";
+"declined" = "Rifiutato";
+
+// MARK: - Date And Time
+"date" = "Data";
+"time" = "Ora";
+
+// MARK: - Hobbies Or Interests
+"interests" = "Interessi";
+"music" = "Musica";
+"reading" = "Lettura";
+"tech" = "Tecnologia";
+"writing" = "Scrittura";
+
+// MARK: - Greetings
+"hey" = "Ciao";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "Qual è il tuo indirizzo e-mail?";
+"askName" = "Qual è il tuo nome?";
+"askTimeZone" = "Qual è il tuo fuso orario?";
+"askInterests" = "Quali sono i tuoi interessi?";
+"askNameStatement" = "Questo apparirà sul tuo profilo Penpal.";
+"profilePicture" = "La tua immagine del profilo";
+"allowNotifications" = "Consenti notifiche";
+"notNow" = "Non ora";
+"skip" = "Salta";
+"languageInfo" = "Informazioni sulla lingua";
+"timeZoneStatement" = "Seleziona il fuso orario";
+"verifyEmail" = "Verifica il tuo indirizzo e-mail";
+"verifyEmailStatement" = "Inserisci il codice che abbiamo inviato alla tua e-mail.";
+"changeEmail" = "Cambia e-mail";
+"resendEmailStatement" = "Non hai ricevuto il codice?";
+"resend" = "Rinvia";

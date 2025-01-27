@@ -8,7 +8,12 @@
 class VocabSheetViewModel: ObservableObject {
     
     
-    
+    // MARK: - Functions Needed?
+
+    // TODO: - CRUD Operations
+    // TODO: - Send VocabSheet
+    // TODO: - Receive VocabSheet
+
     
     // Methods Needed
     
