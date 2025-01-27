@@ -30,6 +30,8 @@ struct MyCalendarView: View {
     @StateObject private var viewModel = MyCalendarViewModel()
     @EnvironmentObject var userSession: UserSession
     @Environment(\.dismiss) private var dismiss
+    @Binding var selectedTab: Tab
+
     var body: some View {
         
         VStack {

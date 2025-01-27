@@ -1,0 +1,115 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "Travel";
+"sports" = "Sports";
+"culture" = "Culture";
+"food" = "Food";
+"movies" = "Movies";
+"work" = "Work";
+"art" = "Art";
+
+//MARK: - Profile Centric
+"email" = "Email";
+"phone_number" = "Phone Number";
+"description" = "Description";
+"first_name" = "First Name";
+"last_name" = "Last Name";
+"country" = "Country";
+"language" = "Language";
+"proficiency" = "Proficiency";
+"goals" = "Goals";
+
+//MARK: - Meeting Centric
+"title" = " Title";
+"description" = "Description";
+"link" = "Meeting Link";
+"status" = "Status";
+"participants" = "Participants";
+
+//MARK: -  Months
+"january" = "January";
+"february" = "February";
+"march" = "March";
+"april" = "April";
+"may" = "May";
+"june" = "June";
+"july" = "July";
+"august" = "August";
+"september" = "September";
+"october" = "October";
+"november" = "November";
+"december" = "December";
+
+//MARK: - Days of the Week
+"monday" = "Monday";
+"tuesday" = "Tuesday";
+"wednesday" = "Wednesday";
+"thursday" = "Thursday";
+"friday" = "Friday";
+"saturday" = "Saturday";
+"sunday" = "Sunday";
+
+// MARK: - Tab Names
+"home_tab" = "Home";
+"study_tab" = "Study";
+"penpal_tab" = "Penpal";
+"profile_tab" = "Profile";
+"messages_tab" = "Messages";
+
+// MARK: - Calendar and Schedule
+"calendar" = "Calendar";
+"schedule" = "Schedule";
+"pending" = "Pending";
+"accepted" = "Accepted";
+"declined" = "Declined"
+
+// MARK: - Date And Time
+"date" = "Date"
+"time" = "Time"
+
+// MARK: - Hobbies Or Interests
+"interests" = "Interests"
+"music" = "Music"
+"reading" = "Reading"
+"tech" = "Tech"
+"writing" = "Writing"
+
+// MARK: - Greetings
+"hey" = "Hey"
+
+// MARK: - Welcome Page Centric
+"askEmail" = "What's your email?";
+"askName" = "What's your name?";
+"askTimeZone" = "What's your Time Zone?";
+"askInterests" = "What are your interests?";
+"askNameStatement" = "This will appear on your Penpal profile.";
+"profilePicture" = "Your profile picture";
+"allowNotifications" = "Allow Notifications";
+"notNow" = "Not now";
+"skip" = "Skip";
+"languageInfo" = "Language Info";
+"timeZoneStatement" = "Select Time Zone";
+"verifyEmail" = "Verify your Email";
+"verifyEmailStatement" = "Enter the code we've sent to your email.";
+"changeEmail" = "Change Email";
+"resendEmailStatement" = "Didn't receive a code?";
+"resend" = "Resend";
+
+//MARK: -
+"fullConvo" = "Have a Long Conversation" // Needs to be looked into
+"convoWithFamily" = "Conversation With Family"
+"readBooks" = "Read Books"
+"passExam" = "Pass Fluency Exam"
+"casualConvo" = "Casual Conversation"
+"interview" = "Complete Job Interview"
+"communicateEffectively" = "Communicate Effectively"
+// Something should be added for trip
+
+
+// MARK: - Penpal Centric

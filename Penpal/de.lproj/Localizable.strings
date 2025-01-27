@@ -1,0 +1,103 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "Reisen";
+"sports" = "Sport";
+"culture" = "Kultur";
+"food" = "Essen";                   // Correct, but "Kulinarik" could also work if focusing on cultural context
+"movies" = "Filme";
+"work" = "Arbeit";
+"art" = "Kunst";
+
+//MARK: -  Profile Centric
+"email" = "E-Mail";
+"phone_number" = "Telefonnummer";
+"description" = "Beschreibung";
+"first_name" = "Vorname";
+"last_name" = "Nachname";
+"country" = "Land";
+"language" = "Sprache";
+"proficiency" = "Sprachniveau";     // Changed from "Kompetenzstufe" (Sprachniveau is more specific to language proficiency)
+"goals" = "Ziele";
+
+//MARK: -  Meeting Centric
+"title" = "Titel";
+"description" = "Beschreibung";
+"link" = "Meeting-Link";
+"status" = "Status";
+"participants" = "Teilnehmer";
+
+//MARK: -  Months
+"january" = "Januar";
+"february" = "Februar";
+"march" = "März";
+"april" = "April";
+"may" = "Mai";
+"june" = "Juni";
+"july" = "Juli";
+"august" = "August";
+"september" = "September";
+"october" = "Oktober";
+"november" = "November";
+"december" = "Dezember";
+
+//MARK: -  Days of the Week
+"monday" = "Montag";
+"tuesday" = "Dienstag";
+"wednesday" = "Mittwoch";
+"thursday" = "Donnerstag";
+"friday" = "Freitag";
+"saturday" = "Samstag";
+"sunday" = "Sonntag";
+
+// MARK: - Tab Names
+"home_tab" = "Startseite";
+"study_tab" = "Studium";
+"penpal_tab" = "Penpal";
+"profile_tab" = "Profil";
+"messages_tab" = "Nachrichten";
+
+// MARK: - Calendar and Schedule
+"calendar" = "Kalender";
+"schedule" = "Zeitplan";
+"pending" = "Ausstehend";
+"accepted" = "Akzeptiert";
+"declined" = "Abgelehnt";
+
+// MARK: - Date And Time
+"date" = "Datum";
+"time" = "Uhrzeit";
+
+// MARK: - Hobbies Or Interests
+"interests" = "Interessen";
+"music" = "Musik";
+"reading" = "Lesen";
+"tech" = "Technologie";
+"writing" = "Schreiben";
+
+// MARK: - Greetings
+"hey" = "Hallo";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "Wie lautet deine E-Mail-Adresse?";
+"askName" = "Wie heißt du?";
+"askTimeZone" = "In welcher Zeitzone bist du?";
+"askInterests" = "Was sind deine Interessen?";
+"askNameStatement" = "Dies wird in deinem Penpal-Profil angezeigt.";
+"profilePicture" = "Dein Profilbild";
+"allowNotifications" = "Benachrichtigungen zulassen";
+"notNow" = "Nicht jetzt";
+"skip" = "Überspringen";
+"languageInfo" = "Sprachinformationen";
+"timeZoneStatement" = "Zeitzone auswählen";
+"verifyEmail" = "E-Mail verifizieren";
+"verifyEmailStatement" = "Gib den Code ein, den wir an deine E-Mail gesendet haben.";
+"changeEmail" = "E-Mail ändern";
+"resendEmailStatement" = "Keinen Code erhalten?";
+"resend" = "Erneut senden";
+

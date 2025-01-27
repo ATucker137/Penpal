@@ -32,6 +32,8 @@ import SwiftUI
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel() // Initialize the ViewModel
     let userId: String // Pass in the userId to fetch the profile
+    @Binding var selectedTab: Tab
+
     
     var body: some View {
         VStack {

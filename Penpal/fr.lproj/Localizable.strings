@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "Voyage";
+"sports" = "Sports";
+"culture" = "Culture";
+"food" = "Nourriture";
+"movies" = "Films";
+"work" = "Travail";
+"art" = "Art";
+
+//MARK: -  Profile Centric
+"email" = "E-mail";
+"phone_number" = "Numéro de téléphone";
+"description" = "Description";
+"first_name" = "Prénom";
+"last_name" = "Nom de famille";
+"country" = "Pays";
+"language" = "Langue";
+"proficiency" = "Niveau de compétence";
+"goals" = "Objectifs";
+
+//MARK: -  Meeting Centric
+"title" = "Titre";
+"description" = "Description";
+"link" = "Lien de la réunion";
+"status" = "Statut";
+"participants" = "Participants";
+
+//MARK: -  Months
+"january" = "Janvier";
+"february" = "Février";
+"march" = "Mars";
+"april" = "Avril";
+"may" = "Mai";
+"june" = "Juin";
+"july" = "Juillet";
+"august" = "Août";
+"september" = "Septembre";
+"october" = "Octobre";
+"november" = "Novembre";
+"december" = "Décembre";
+
+//MARK: -  Days of the Week
+"monday" = "Lundi";
+"tuesday" = "Mardi";
+"wednesday" = "Mercredi";
+"thursday" = "Jeudi";
+"friday" = "Vendredi";
+"saturday" = "Samedi";
+"sunday" = "Dimanche";
+
+// MARK: - Tab Names
+"home_tab" = "Accueil";
+"study_tab" = "Étude";
+"penpal_tab" = "Penpal";
+"profile_tab" = "Profil";
+"messages_tab" = "Messages";
+
+// MARK: - Calendar and Schedule
+"calendar" = "Calendrier";
+"schedule" = "Emploi du temps";
+"pending" = "En attente";
+"accepted" = "Accepté";
+"declined" = "Refusé";
+
+// MARK: - Date And Time
+"date" = "Date";
+"time" = "Heure";
+
+// MARK: - Hobbies Or Interests
+"interests" = "Intérêts";
+"music" = "Musique";
+"reading" = "Lecture";
+"tech" = "Technologie";
+"writing" = "Écriture";
+
+// MARK: - Greetings
+"hey" = "Salut";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "Quelle est votre adresse e-mail ?";
+"askName" = "Quel est votre nom ?";
+"askTimeZone" = "Quel est votre fuseau horaire ?";
+"askInterests" = "Quels sont vos centres d'intérêt ?";
+"askNameStatement" = "Cela apparaîtra sur votre profil Penpal.";
+"profilePicture" = "Votre photo de profil";
+"allowNotifications" = "Autoriser les notifications";
+"notNow" = "Pas maintenant";
+"skip" = "Passer";
+"languageInfo" = "Infos sur la langue";
+"timeZoneStatement" = "Sélectionnez un fuseau horaire";
+"verifyEmail" = "Vérifiez votre e-mail";
+"verifyEmailStatement" = "Entrez le code que nous avons envoyé à votre e-mail.";
+"changeEmail" = "Changer l'e-mail";
+"resendEmailStatement" = "Vous n'avez pas reçu de code ?";
+"resend" = "Renvoyer";

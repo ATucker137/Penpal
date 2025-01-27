@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "Путешествия";
+"sports" = "Спорт";
+"culture" = "Культура";
+"food" = "Еда";
+"movies" = "Фильмы";
+"work" = "Работа";
+"art" = "Искусство";
+
+//MARK: -  Profile Centric
+"email" = "Электронная почта";
+"phone_number" = "Номер телефона";
+"description" = "Описание";
+"first_name" = "Имя";
+"last_name" = "Фамилия";
+"country" = "Страна";
+"language" = "Язык";
+"proficiency" = "Уровень владения";
+"goals" = "Цели";
+
+//MARK: -  Meeting Centric
+"title" = "Заголовок";
+"description" = "Описание";
+"link" = "Ссылка на встречу";
+"status" = "Статус";
+"participants" = "Участники";
+
+//MARK: -  Months
+"january" = "Январь";
+"february" = "Февраль";
+"march" = "Март";
+"april" = "Апрель";
+"may" = "Май";
+"june" = "Июнь";
+"july" = "Июль";
+"august" = "Август";
+"september" = "Сентябрь";
+"october" = "Октябрь";
+"november" = "Ноябрь";
+"december" = "Декабрь";
+
+//MARK: -  Days of the Week
+"monday" = "Понедельник";
+"tuesday" = "Вторник";
+"wednesday" = "Среда";
+"thursday" = "Четверг";
+"friday" = "Пятница";
+"saturday" = "Суббота";
+"sunday" = "Воскресенье";
+
+//MARK: - Tab Names
+"home_tab" = "Главная";
+"study_tab" = "Учеба";
+"penpal_tab" = "Пенпал";
+"profile_tab" = "Профиль";
+"messages_tab" = "Сообщения";
+
+// MARK: - Calendar and Schedule
+"calendar" = "Календарь";
+"schedule" = "Расписание";
+"pending" = "В ожидании";
+"accepted" = "Принято";
+"declined" = "Отклонено";
+
+// MARK: - Date And Time
+"date" = "Дата";
+"time" = "Время";
+
+// MARK: - Hobbies Or Interests
+"interests" = "Интересы";
+"music" = "Музыка";
+"reading" = "Чтение";
+"tech" = "Технологии";
+"writing" = "Письмо";
+
+// MARK: - Greetings
+"hey" = "Привет";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "Какой у вас адрес электронной почты?";
+"askName" = "Как вас зовут?";
+"askTimeZone" = "Какой у вас часовой пояс?";
+"askInterests" = "Какие у вас интересы?";
+"askNameStatement" = "Это будет отображаться в вашем профиле Penpal.";
+"profilePicture" = "Ваше фото профиля";
+"allowNotifications" = "Разрешить уведомления";
+"notNow" = "Не сейчас";
+"skip" = "Пропустить";
+"languageInfo" = "Информация о языке";
+"timeZoneStatement" = "Выберите часовой пояс";
+"verifyEmail" = "Подтвердите вашу электронную почту";
+"verifyEmailStatement" = "Введите код, который мы отправили на вашу почту.";
+"changeEmail" = "Изменить почту";
+"resendEmailStatement" = "Не получили код?";
+"resend" = "Отправить снова";

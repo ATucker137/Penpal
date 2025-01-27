@@ -24,7 +24,8 @@ struct HomeView: View {
     @EnvironmentObject var quizViewModel: QuizViewModel
     @EnvironmentObject var messageViewModel: MessageViewModel
     
-    @StateObject private var homeViewModel: HomeViewModel
+    @ObservedObject var homeViewModel: HomeViewModel // Use @ObservedObject here instead of @StateObject
+    @Binding var selectedTab: Tab
     
     init(profileViewModel: ProfileViewModel, quizViewModel: QuizViewModel, messageViewModel: MessageViewModel, homeViewModel: HomeViewModel) {
         self.profileViewModel = profileViewModel

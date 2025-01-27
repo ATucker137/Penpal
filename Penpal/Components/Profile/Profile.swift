@@ -14,6 +14,8 @@ import Foundation
 // NOTE: Uses JSONDecoder to decode languages and hobbies from nested dictionaries.
 
 class Profile: Codable, Identifiable {
+    
+    // MARK: - Properties
     var id: String
     var firstName: String
     var lastName: String
@@ -27,6 +29,8 @@ class Profile: Codable, Identifiable {
     var createdAt: String
     var updatedAt: String
 
+    
+    // MARK: - Initializer
     init(
         id: String,
         firstName: String,
@@ -55,6 +59,7 @@ class Profile: Codable, Identifiable {
         self.updatedAt = updatedAt
     }
     
+    // MARK: - Takes Data From Firestore and Turns into Profile
     // made static because it doesnt rely on existing existence
     static func fromFireStoreData(_ data: [String: Any]) -> Profile {
         guard let id = data["id"] as? String,
@@ -74,7 +79,7 @@ class Profile: Codable, Identifiable {
         return Profile(id: id, firstName: firstName, lastName: lastName, email: email, region: region, country: country, languages: languages, goals: goals, hobbies: hobbies, profileImageURL: profileImageURL, createdAt: createdAt, updatedAt: updatedAt)
     }
     
-    
+    // MARK: - Takes Profile data and puts into Firestore
     func toFireStoreData() -> [String: Any] {
         return [
             "id" : id,

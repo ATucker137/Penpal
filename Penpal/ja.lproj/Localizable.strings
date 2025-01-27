@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "旅行";
+"sports" = "スポーツ";
+"culture" = "文化";
+"food" = "料理";
+"movies" = "映画";
+"work" = "仕事";
+"art" = "アート";
+
+//MARK: -  Profile Centric
+"email" = "メール";
+"phone_number" = "電話番号";
+"description" = "説明";
+"first_name" = "名前";
+"last_name" = "姓";
+"country" = "国";
+"language" = "言語";
+"proficiency" = "熟練度";
+"goals" = "目標";
+
+//MARK: -  Meeting Centric
+"title" = "タイトル";
+"description" = "説明";
+"link" = "ミーティングリンク";
+"status" = "ステータス";
+"participants" = "参加者";
+
+//MARK: -  Months
+"january" = "1月";
+"february" = "2月";
+"march" = "3月";
+"april" = "4月";
+"may" = "5月";
+"june" = "6月";
+"july" = "7月";
+"august" = "8月";
+"september" = "9月";
+"october" = "10月";
+"november" = "11月";
+"december" = "12月";
+
+//MARK: -  Days of the Week
+"monday" = "月曜日";
+"tuesday" = "火曜日";
+"wednesday" = "水曜日";
+"thursday" = "木曜日";
+"friday" = "金曜日";
+"saturday" = "土曜日";
+"sunday" = "日曜日";
+
+//MARK: - Tab Names
+"home_tab" = "ホーム";
+"study_tab" = "勉強";
+"penpal_tab" = "ペンパル";
+"profile_tab" = "プロフィール";
+"messages_tab" = "メッセージ";
+
+// MARK: - Calendar and Schedule
+"calendar" = "カレンダー";
+"schedule" = "スケジュール";
+"pending" = "保留中";
+"accepted" = "承認済み";
+"declined" = "拒否済み";
+
+// MARK: - Date And Time
+"date" = "日付";
+"time" = "時間";
+
+// MARK: - Hobbies Or Interests
+"interests" = "興味";
+"music" = "音楽";
+"reading" = "読書";
+"tech" = "技術";
+"writing" = "執筆";
+
+// MARK: - Greetings
+"hey" = "やあ";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "メールアドレスは何ですか？";
+"askName" = "お名前は何ですか？";
+"askTimeZone" = "タイムゾーンは何ですか？";
+"askInterests" = "興味は何ですか？";
+"askNameStatement" = "これはPenpalのプロフィールに表示されます。";
+"profilePicture" = "プロフィール写真";
+"allowNotifications" = "通知を許可";
+"notNow" = "今はしない";
+"skip" = "スキップ";
+"languageInfo" = "言語情報";
+"timeZoneStatement" = "タイムゾーンを選択";
+"verifyEmail" = "メールアドレスを確認";
+"verifyEmailStatement" = "メールで送信されたコードを入力してください。";
+"changeEmail" = "メールアドレスを変更";
+"resendEmailStatement" = "コードを受け取っていませんか？";
+"resend" = "再送";

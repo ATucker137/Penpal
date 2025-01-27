@@ -1,0 +1,102 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "旅行";
+"sports" = "运动";
+"culture" = "文化";
+"food" = "美食"; // Changed from "食物" to "美食" (more appropriate for food in a cultural context)
+"movies" = "电影";
+"work" = "工作";
+"art" = "艺术";
+
+//MARK: -  Profile Centric
+"email" = "电子邮件";
+"phone_number" = "电话号码";
+"description" = "简介";     // Changed from "描述" to "简介" (better for a personal profile description)
+"first_name" = "名字";
+"last_name" = "姓";         // Changed from "姓氏" to "姓" (more concise and natural)
+"country" = "国家";
+"language" = "语言";
+"proficiency" = "熟练程度";
+"goals" = "目标";
+
+//MARK: -  Meeting Centric
+"title" = "标题";
+"description" = "描述";
+"link" = "会议链接";
+"status" = "状态";
+"participants" = "参与者";
+
+//MARK: -  Months
+"january" = "一月";
+"february" = "二月";
+"march" = "三月";
+"april" = "四月";
+"may" = "五月";
+"june" = "六月";
+"july" = "七月";
+"august" = "八月";
+"september" = "九月";
+"october" = "十月";
+"november" = "十一月";
+"december" = "十二月";
+
+//MARK: -  Days of the Week
+"monday" = "星期一";
+"tuesday" = "星期二";
+"wednesday" = "星期三";
+"thursday" = "星期四";
+"friday" = "星期五";
+"saturday" = "星期六";
+"sunday" = "星期日";
+
+// MARK: - Tab Names
+"home_tab" = "主页";
+"study_tab" = "学习";
+"penpal_tab" = "笔友";
+"profile_tab" = "个人资料";
+"messages_tab" = "消息";
+
+// MARK: - Calendar and Schedule
+"calendar" = "日历";
+"schedule" = "日程";
+"pending" = "待定";
+"accepted" = "已接受";
+"declined" = "已拒绝";
+
+// MARK: - Date And Time
+"date" = "日期";
+"time" = "时间";
+
+// MARK: - Hobbies Or Interests
+"interests" = "兴趣";
+"music" = "音乐";
+"reading" = "阅读";
+"tech" = "科技";
+"writing" = "写作";
+
+// MARK: - Greetings
+"hey" = "嘿";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "你的电子邮件是什么？";
+"askName" = "你的名字是什么？";
+"askTimeZone" = "你的时区是什么？";
+"askInterests" = "你的兴趣是什么？";
+"askNameStatement" = "这将显示在你的Penpal个人资料中。";
+"profilePicture" = "你的个人头像";
+"allowNotifications" = "允许通知";
+"notNow" = "暂不";
+"skip" = "跳过";
+"languageInfo" = "语言信息";
+"timeZoneStatement" = "选择时区";
+"verifyEmail" = "验证你的电子邮件";
+"verifyEmailStatement" = "输入我们发送到你电子邮件的验证码。";
+"changeEmail" = "更改电子邮件";
+"resendEmailStatement" = "没有收到验证码？";
+"resend" = "重新发送";

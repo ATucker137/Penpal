@@ -17,9 +17,33 @@
 		F1047EDA2E25745E890879DC /* Pods_Penpal.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Penpal.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		39D36A932D445431000BA8E6 /* Exceptions for "Penpal" folder in "Penpal" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Localizable.strings",
+			);
+			target = 397F66B52CF84FEE00D21428 /* Penpal */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		39D36A942D445431000BA8E6 /* Exceptions for "Penpal" folder in "Compile Sources" phase from "Penpal" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 397F66B22CF84FEE00D21428 /* Sources */;
+			membershipExceptions = (
+				"/Localized: Localizable.strings",
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		397F66B82CF84FEE00D21428 /* Penpal */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				39D36A932D445431000BA8E6 /* Exceptions for "Penpal" folder in "Penpal" target */,
+				39D36A942D445431000BA8E6 /* Exceptions for "Penpal" folder in "Compile Sources" phase from "Penpal" target */,
+			);
 			path = Penpal;
 			sourceTree = "<group>";
 		};
@@ -118,6 +142,20 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
+				"es-US",
+				fr,
+				ja,
+				ko,
+				it,
+				"zh-Hans",
+				"pt-PT",
+				ru,
+				"pt-BR",
+				hi,
+				de,
+				"es-419",
+				ar,
 			);
 			mainGroup = 397F66AD2CF84FED00D21428;
 			minimizedProjectReferenceProxies = 1;

@@ -1,0 +1,104 @@
+//
+//  Untitled.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 1/24/25.
+//
+
+//MARK: -  Topic Centric
+"travel" = "سفر";
+"sports" = "رياضة";
+"culture" = "ثقافة";
+"food" = "طعام";
+"movies" = "أفلام";
+"work" = "عمل";
+"art" = "فن";
+
+//MARK: -  Profile Centric
+"email" = "بريد إلكتروني";
+"phone_number" = "رقم الهاتف";
+"description" = "وصف";
+"first_name" = "الاسم الأول";
+"last_name" = "اسم العائلة";
+"country" = "دولة";
+"language" = "لغة";
+"proficiency" = "مستوى الإتقان";
+"goals" = "أهداف";
+
+//MARK: -  Meeting Centric
+"title" = "عنوان";
+"description" = "وصف";
+"link" = "رابط الاجتماع";
+"status" = "حالة";
+"participants" = "المشاركون";
+
+//MARK: -  Months
+"january" = "يناير";
+"february" = "فبراير";
+"march" = "مارس";
+"april" = "أبريل";
+"may" = "مايو";
+"june" = "يونيو";
+"july" = "يوليو";
+"august" = "أغسطس";
+"september" = "سبتمبر";
+"october" = "أكتوبر";
+"november" = "نوفمبر";
+"december" = "ديسمبر";
+
+//MARK: -  Days of the Week
+"monday" = "الاثنين";
+"tuesday" = "الثلاثاء";
+"wednesday" = "الأربعاء";
+"thursday" = "الخميس";
+"friday" = "الجمعة";
+"saturday" = "السبت";
+"sunday" = "الأحد";
+
+// MARK: - Tab Names:
+"home_tab" = "الصفحة الرئيسية";
+"study_tab" = "الدراسة";
+"penpal_tab" = "صديق المراسلة";
+"profile_tab" = "الملف الشخصي";
+"messages_tab" = "الرسائل";
+
+// MARK: - Calendar and Schedule
+"calendar" = "التقويم";
+"schedule" = "الجدول الزمني";
+"pending" = "قيد الانتظار";
+"accepted" = "مقبول";
+"declined" = "مرفوض";
+
+// MARK: - Date And Time
+"date" = "التاريخ";
+"time" = "الوقت";
+
+// MARK: - Hobbies Or Interests
+"interests" = "الاهتمامات";
+"music" = "الموسيقى";
+"reading" = "القراءة";
+"tech" = "التكنولوجيا";
+"writing" = "الكتابة";
+
+// MARK: - Greetings
+"hey" = "مرحبًا";
+
+// MARK: - Welcome Page Centric
+"askEmail" = "ما هو بريدك الإلكتروني؟";
+"askName" = "ما هو اسمك؟";
+"askTimeZone" = "ما هي منطقتك الزمنية؟";
+"askInterests" = "ما هي اهتماماتك؟";
+"askNameStatement" = "سيظهر هذا في ملفك الشخصي على Penpal.";
+"profilePicture" = "صورتك الشخصية";
+"allowNotifications" = "السماح بالإشعارات";
+"notNow" = "ليس الآن";
+"skip" = "تخطي";
+"languageInfo" = "معلومات اللغة";
+"timeZoneStatement" = "حدد المنطقة الزمنية";
+"verifyEmail" = "تحقق من بريدك الإلكتروني";
+"verifyEmailStatement" = "أدخل الرمز الذي أرسلناه إلى بريدك الإلكتروني.";
+"changeEmail" = "تغيير البريد الإلكتروني";
+"resendEmailStatement" = "لم تستلم رمزاً؟";
+"resend" = "إعادة الإرسال";
+
+
