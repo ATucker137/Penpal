@@ -110,10 +110,9 @@ struct ProfileView: View {
                     
                     Spacer()
                     
-                    // Button to edit profile
-                    Button(action: {
-                        // Navigate to edit profile screen
-                    }) {
+                    
+                    // NavigationLink to edit profile
+                    NavigationLink(destination: EditProfileView(profile: profile)) {
                         Text("Edit Profile")
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -122,6 +121,7 @@ struct ProfileView: View {
                             .cornerRadius(8)
                     }
                     .padding(.top, 20)
+
                 }
                 .padding()
             } else {

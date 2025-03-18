@@ -12,6 +12,8 @@ import SwiftUI
 class MainTabView: View {
     
     @State private var selectedTab = Tab .home
+    @State private var lastOpenedMessageId: String? = nil // Start empty
+
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -20,17 +22,18 @@ class MainTabView: View {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(Tab.home)
-            PenpalsView(selectedTab: $selectedTab)
+            PenpalView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Penpals", systemImage: "person.2.fill")
                 }
                 .tag(Tab.penpals)
-            MessagesView(selectedTab: $selectedTab)
+            // MARK: - TODO Should First Go into the Conversations Tab But if ID like for it to go into the exact message if the user clicked on one an dnavigate sback to the app
+            MessagesWrapperView(selectedTab: $selectedTab, lastOpenedMessageId: $lastOpenedMessageId)
                 .tabItem {
                     Label("Messages",systemImage: "message.fill")
                 }
                 .tag(Tab.messages)
-            StudyView(selectedTab: $selectedTab)
+            VocabSheetView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Study",systemImage: "book.fill")
                 }

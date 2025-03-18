@@ -104,6 +104,8 @@ struct MyCalendarView: View {
                 }
             }
         }
+    }.onAppear {
+        viewModel.fetchAllMeetings() // Fetch meetings when the view appears
     }
 }
 

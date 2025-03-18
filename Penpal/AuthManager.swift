@@ -37,6 +37,10 @@ class AuthManager: ObservableObject {
             print("Error logging out: \(error)")
         }
     }
+    
+    static func sendEmailVerification(email: String, completion: @escaping (Bool) -> Void) {
+        //Auth.auth().
+    }
 
     // Check current authentication status
     func checkAuthStatus() {
