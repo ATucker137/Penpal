@@ -21,40 +21,23 @@ class MyCalendarService: CalendarServiceProtocol {
     
     // NOTE: Much of this might not be needed because its basically a bunch of Meetings
     
-    
-    // MARK: - Fetch Calendar Through Firestore
-    func fetchMyCalendar(for userId: String, date: Date, completion: @escaping (Result<[MyCalendar], Error>) -> Void) {
-        
-        // Ensure user ID is valid
-        guard !userId.isEmpty else {
-            completion(.failure(NSError(domain: "UserIDError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid user ID."])))
-            return
-        }
-        // Calculate time range
-        let startOfDay = Calendar.current.startOfDay(for: date)
-        guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
-            completion(.failure(NSError(domain: "DateError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to calculate end of day."])))
-            return
-        }
-        
-        db.collection("profiles").document(userId).collection("calendarEvents")
-            .whereField("startTime", isGreaterThanOrEqualTo: startOfDay)
-            .whereField("startTime", isLessThan: endOfDay)
-            .getDocuments { snapshot, error in
-                if let error = error {
-                    completion(.failure(error))
+    func fetchMyCalendar(for userId: String, completion: @escaping (Result<MyCalendar, Error>) -> Void) {
+        db.collection("calendars").document(userId).getDocument { document, error in
+            if let error = error {
+                completion(.failure(error))
+            } else if let document = document, document.exists {
+                if let data = document.data(),
+                   let calendar = MyCalendar.fromFireStoreData(data) {
+                    completion(.success(calendar))
                 } else {
-                    do {
-                        let events = try snapshot?.documents.compactMap {
-                            try $0.data(as: MyCalendar.self)
-                        } ?? []
-                        completion(.success(events))
-                    } catch {
-                        completion(.failure(error))
-                    }
+                    completion(.failure(NSError(domain: "DataError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to decode calendar data."])))
                 }
+            } else {
+                completion(.failure(NSError(domain: "NotFoundError", code: 3, userInfo: [NSLocalizedDescriptionKey: "Calendar not found."])))
             }
+        }
     }
+
     
     // MARK: - Save Event Through Firestore
     func saveMyCalendar(_ calendar: MyCalendar, completion: @escaping (Result<Void, Error>) -> Void) {
@@ -74,5 +57,8 @@ class MyCalendarService: CalendarServiceProtocol {
     
     // MARK: - Add Calendar Through Firestore
     // Needs To Make Sure This Isnt A time thats already there
+    
+    
+    // MARK: - 
 
 }

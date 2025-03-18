@@ -7,13 +7,16 @@
 import Foundation
 
 class MeetingViewModel: ObservableObject {
-    @Published var meeting: Meeting? // Optional to handle no meeting state
+    @Published var meeting: MeetingModel? // Optional to handle no meeting state
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     
     // MARK: - Private Properties
     private let meetingService = MeetingService
+    private var userId: String? {
+        return UserSession.shared.userId
+    }
     
     // MARK: - Initializer
     
@@ -49,7 +52,7 @@ class MeetingViewModel: ObservableObject {
     }
 
     // MARK: - Create Meeting
-    func createMeeting(meeting: Meeting) {
+    func createMeeting(meeting: MeetingModel) {
         startLoading()
         meetingService.createMeeting(meeting: meeting) { [weak self] result in
             DispatchQueue.main.async {
@@ -81,7 +84,7 @@ class MeetingViewModel: ObservableObject {
     }
 
     // MARK: - Update Meeting
-    func updateMeeting(meeting: Meeting) {
+    func updateMeeting(meeting: MeetingModel) {
         startLoading()
         meetingService.updateMeeting(meeting: meeting) { [weak self] result in
             DispatchQueue.main.async {

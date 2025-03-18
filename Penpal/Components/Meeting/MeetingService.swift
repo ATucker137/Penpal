@@ -82,7 +82,7 @@ class MeetingService {
             }
 
             do {
-                let meeting = try snapshot.data(as: Meeting.self) // Decode Firestore document into Profile
+                let meeting = try snapshot.data(as: MeetingModel.self) // Decode Firestore document into Profile
                 completion(.success(meeting))
             } catch let error {
                 completion(.failure(error))
@@ -110,7 +110,7 @@ class MeetingService {
                 
                 // Decode the document's data into a `Meeting` object
                 // If decoding fails (i.e., if the meeting document doesn't exist or its data is malformed), an error is thrown.
-                guard var meeting = try meetingSnapshot.data(as: Meeting.self) else {
+                guard var meeting = try meetingSnapshot.data(as: MeetingModel.self) else {
                     throw NSError(domain: "MeetingService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Meeting not found."])
                 }
                 
@@ -153,6 +153,32 @@ class MeetingService {
         }
     }
 
+    
+    // MARK: - Fetch All Meetings Through Firestore
+    func fetchAllMeetings(completion: @escaping (Result<[MeetingModel], Error>) -> Void) {
+        db.collection(collectionName).getDocuments { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let snapshot = snapshot else {
+                completion(.failure(NSError(domain: "MeetingService", code: 404, userInfo: [NSLocalizedDescriptionKey: "No meetings found."])))
+                return
+            }
+
+            do {
+                // Map the documents to an array of `MeetingModel`
+                let meetings = try snapshot.documents.compactMap { document -> MeetingModel? in
+                    return try document.data(as: MeetingModel.self)
+                }
+                completion(.success(meetings))
+            } catch let error {
+                completion(.failure(error))
+            }
+        }
+    }
+
         
         
     
@@ -161,6 +187,36 @@ class MeetingService {
         
     }
     
+    func addDiscussionTopicsToMeeting(discussionTopic: String, meetingId: String) {
+        // Call Fetch Meeting
+        // Fetch the meeting using the existing fetchMeeting method
+        fetchMeeting(meetingId: meetingId) { result in
+            switch result {
+            case .success(var meeting):
+                // Modify the discussion topics
+                var discussionTopics = meeting.discussionTopics ?? [:]
+                
+                // Assuming you are adding the topic under a generic "New Topic" key. Modify as needed.
+                let newTopic = "New Topic" // Change this logic based on your needs
+                if discussionTopics[newTopic] == nil {
+                    discussionTopics[newTopic] = []  // Initialize if it doesn't exist
+                }
+                
+                // Append the new discussion topic to the array
+                discussionTopics[newTopic]?.append(discussionTopic)
+                
+                // Update the meeting's discussionTopics
+                meeting.discussionTopics = discussionTopics
+                
+                // Save the updated meeting back to Firestore
+                self.updateMeeting(meeting: meeting)
+                
+            case .failure(let error):
+                print("Error fetching meeting: \(error.localizedDescription)")
+            }
+        }
+    }
+    // Editing Discussion TOpics
     
     
 }

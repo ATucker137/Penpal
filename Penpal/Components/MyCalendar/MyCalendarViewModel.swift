@@ -24,7 +24,9 @@ class MyCalendarViewModel: ObservableObject {
     
     // MARK: - Private Properties
     
-    private let userId: String
+    private var userId: String? {
+        return UserSession.shared.userId
+    }
     private let service: MyCalendarService
     
     // MARK: - Initializer
@@ -34,7 +36,7 @@ class MyCalendarViewModel: ObservableObject {
         fetchCalendar()
     }
     
-    // MARK: - Fetch Events
+    // MARK: - Fetch Events - might not need this due to fetchAllMeetings below
     func fetchCalendar() {
         isLoading = true
         service.fetchCalendar { [weak self] result in
@@ -50,6 +52,19 @@ class MyCalendarViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Fetch all meetings from Firestore
+    func fetchAllMeetings() {
+        meetingService.fetchAllMeetings { [weak self] result in
+            DispatchQueue.main.async { // Ensure updates happen on the main thread
+                switch result {
+                case .success(let fetchedMeetings):
+                    self?.meetings = fetchedMeetings // Update the published meetings
+                case .failure(let error):
+                    self?.errorMessage = "Error fetching meetings: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
 
     
     // MARK: - Save Event
@@ -85,10 +100,6 @@ class MyCalendarViewModel: ObservableObject {
         
         // Changing the status as wellfrom pending to declined
         
-        
     }
-    
-    
-    
     
 }

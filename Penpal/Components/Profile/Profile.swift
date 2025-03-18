@@ -73,7 +73,8 @@ class Profile: Codable, Identifiable {
               let hobbies = data["hobbies"] as? [Hobbies],
               let profileImageURL = data["profileImageURL"] as? String,
               let createdAt = data["createdAt"] as? String,
-              let updatedAt = data["updatedAt"] as? String else {
+              let updatedAt = data["updatedAt"] as? String
+        else {
             return nil
         }
         return Profile(id: id, firstName: firstName, lastName: lastName, email: email, region: region, country: country, languages: languages, goals: goals, hobbies: hobbies, profileImageURL: profileImageURL, createdAt: createdAt, updatedAt: updatedAt)
@@ -95,6 +96,67 @@ class Profile: Codable, Identifiable {
             "createdAt" : createdAt,
             "updatedAt" : updatedAt,
         ]
+    }
+    
+    // MARK: - toSQLite
+    func toSQLite() -> [String: Any] {
+        return [
+            "id": self.id,
+            "firstName": self.firstName,
+            "lastName": self.lastName,
+            "email": self.email,
+            "region": self.region,
+            "country": self.country,
+            "languages": try? JSONEncoder().encode(self.languages), // Convert to JSON string
+            "goals": try? JSONEncoder().encode(self.goals),
+            "hobbies": try? JSONEncoder().encode(self.hobbies),
+            "profileImageURL": self.profileImageURL,
+            "createdAt": self.createdAt,  // Keep as String, or convert to Date if needed
+            "updatedAt": self.updatedAt
+        ]
+    }
+    
+    // MARK: - fromSQLite
+    static func fromSQLite(_ data: [String: Any]) -> Profile? {
+        guard let id = data["id"] as? String,
+              let firstName = data["firstName"] as? String,
+              let lastName = data["lastName"] as? String,
+              let email = data["email"] as? String,
+              let region = data["region"] as? String,
+              let country = data["country"] as? String,
+              let languagesData = data["languages"] as? Data,
+              let goalsData = data["goals"] as? Data,
+              let hobbiesData = data["hobbies"] as? Data,
+              let profileImageURL = data["profileImageURL"] as? String,
+              let createdAt = data["createdAt"] as? String,
+              let updatedAt = data["updatedAt"] as? String
+        else {
+            return nil
+        }
+        
+        do {
+            let languages = try JSONDecoder().decode([LanguageProficiency].self, from: languagesData)
+            let goals = try JSONDecoder().decode([String].self, from: goalsData)
+            let hobbies = try JSONDecoder().decode([Hobbies].self, from: hobbiesData)
+            
+            return Profile(
+                id: id,
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                region: region,
+                country: country,
+                languages: languages,
+                goals: goals,
+                hobbies: hobbies,
+                profileImageURL: profileImageURL,
+                createdAt: createdAt,
+                updatedAt: updatedAt
+            )
+        } catch {
+            print("Error decoding SQLite data: \(error)")
+            return nil
+        }
     }
     
 }

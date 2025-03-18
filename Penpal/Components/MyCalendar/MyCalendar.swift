@@ -5,14 +5,13 @@
 //  Created by Austin William Tucker on 12/1/24.
 //
 
-// MARK: - MyCalendar - Model of a Users Calendar in the MVVM Structure
+// MARK: - MyCalendar - Model of a User's Calendar in the MVVM Structure
 class MyCalendar: Codable, Identifiable {
     
     // MARK: - Properties
-    var id: String
-    var userId: String
-    var meetingIds: [String] // No longers going to store List of meetings, need to store list of ids
-    
+    var id: String // Unique identifier for this calendar instance
+    var userId: String // ID of the user who owns this calendar
+    var meetingIds: [String] // Stores list of meeting IDs (not full meeting objects for efficiency)
     
     // MARK: - Initializer
     init(id: String, userId: String, meetingIds: [String]) {
@@ -21,20 +20,45 @@ class MyCalendar: Codable, Identifiable {
         self.meetingIds = meetingIds
     }
     
-    
-    //NOTE Verify this with CHatGPT
-    // MARK: - Method to take Collection from FireStore and put into Calendar Model
+    // MARK: - Method to Create MyCalendar from Firestore Data
+    /// Converts Firestore document data into a `MyCalendar` object.
     static func fromFireStoreData(_ data: [String: Any]) -> MyCalendar? {
-        
-        guard let id = data["id"] as? String,
-              let userId = data["userId"] as? String,
-              let meetingIds = data["meetingIds"] as? [String] else {
-            return nil
+        guard let id = data["id"] as? String, // Validate ID
+              let userId = data["userId"] as? String, // Validate UserID
+              let meetingIds = data["meetingIds"] as? [String] else { // Validate MeetingIDs
+            return nil // Return nil if any data is missing or invalid
         }
         return MyCalendar(id: id, userId: userId, meetingIds: meetingIds)
-       
     }
     
+    // MARK: - Converts MyCalendar instance into Firestore-friendly dictionary
+    func toFireStoreData() -> [String: Any] {
+        return [
+            "id": id,
+            "userId": userId,
+            "meetingIds": meetingIds
+        ]
+    }
     
+    // MARK: - Converts MyCalendar instance to SQLite-compatible format
+    func toSQLite() -> [String: Any] {
+        return [
+            "id": id,
+            "userId": userId,
+            "meetingIds": meetingIds.joined(separator: ",") // Store as comma-separated string
+        ]
+    }
     
+    // MARK: - Creates a MyCalendar instance from SQLite-compatible dictionary
+    static func fromSQLite(_ data: [String: Any]) -> MyCalendar? {
+        guard let id = data["id"] as? String,
+              let userId = data["userId"] as? String,
+              let meetingIdsString = data["meetingIds"] as? String else {
+            return nil
+        }
+        
+        let meetingIds = meetingIdsString.isEmpty ? [] : meetingIdsString.components(separatedBy: ",")
+        
+        return MyCalendar(id: id, userId: userId, meetingIds: meetingIds)
+    }
 }
