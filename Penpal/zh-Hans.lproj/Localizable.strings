@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "旅行";
 "sports" = "运动";
 "culture" = "文化";
@@ -14,7 +14,7 @@
 "work" = "工作";
 "art" = "艺术";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "电子邮件";
 "phone_number" = "电话号码";
 "description" = "简介";     // Changed from "描述" to "简介" (better for a personal profile description)
@@ -25,14 +25,14 @@
 "proficiency" = "熟练程度";
 "goals" = "目标";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "标题";
 "description" = "描述";
 "link" = "会议链接";
 "status" = "状态";
 "participants" = "参与者";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "一月";
 "february" = "二月";
 "march" = "三月";
@@ -46,7 +46,7 @@
 "november" = "十一月";
 "december" = "十二月";
 
-//MARK: -  Days of the Week
+/* MARK: - Days of the Week */
 "monday" = "星期一";
 "tuesday" = "星期二";
 "wednesday" = "星期三";
@@ -55,35 +55,35 @@
 "saturday" = "星期六";
 "sunday" = "星期日";
 
-// MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "主页";
 "study_tab" = "学习";
 "penpal_tab" = "笔友";
 "profile_tab" = "个人资料";
 "messages_tab" = "消息";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "日历";
 "schedule" = "日程";
 "pending" = "待定";
 "accepted" = "已接受";
 "declined" = "已拒绝";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "日期";
 "time" = "时间";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "兴趣";
 "music" = "音乐";
 "reading" = "阅读";
 "tech" = "科技";
 "writing" = "写作";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "嘿";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "你的电子邮件是什么？";
 "askName" = "你的名字是什么？";
 "askTimeZone" = "你的时区是什么？";

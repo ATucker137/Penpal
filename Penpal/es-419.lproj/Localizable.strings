@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "Viajes";                // Changed from "Viaje" to "Viajes" (plural is more common for general topics)
 "sports" = "Deportes";
 "culture" = "Cultura";
@@ -14,7 +14,7 @@
 "work" = "Trabajo";
 "art" = "Arte";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "Correo electrónico";
 "phone_number" = "Número de teléfono";
 "description" = "Descripción";
@@ -25,14 +25,14 @@
 "proficiency" = "Nivel de competencia";
 "goals" = "Objetivos";              // Changed from "Metas" to "Objetivos" (both work, but "Objetivos" is slightly more formal and common in educational contexts)
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "Título";
 "description" = "Descripción";
 "link" = "Enlace de la reunión";
 "status" = "Estado";
 "participants" = "Participantes";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "Enero";
 "february" = "Febrero";
 "march" = "Marzo";
@@ -46,7 +46,7 @@
 "november" = "Noviembre";
 "december" = "Diciembre";
 
-//MARK: -  Days of the Week
+/* MARK: -  Days of the Week */
 "monday" = "Lunes";
 "tuesday" = "Martes";
 "wednesday" = "Miércoles";
@@ -55,35 +55,35 @@
 "saturday" = "Sábado";
 "sunday" = "Domingo";
 
-// MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "Inicio";
 "study_tab" = "Estudio";
 "penpal_tab" = "Penpal";
 "profile_tab" = "Perfil";
 "messages_tab" = "Mensajes";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "Calendario";
 "schedule" = "Agenda";
 "pending" = "Pendiente";
 "accepted" = "Aceptado";
 "declined" = "Rechazado";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "Fecha";
 "time" = "Hora";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "Intereses";
 "music" = "Música";
 "reading" = "Lectura";
 "tech" = "Tecnología";
 "writing" = "Escritura";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "Hola";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "¿Cuál es tu correo electrónico?";
 "askName" = "¿Cómo te llamas?";
 "askTimeZone" = "¿Cuál es tu zona horaria?";

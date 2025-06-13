@@ -12,22 +12,13 @@ import FirebaseFirestoreSwift
 
 // TODO: List Under
 /*
-
- 
- Validation That Profiles Aren't Empty
- 
  Real Time Updates
- 
  Batch Operation
- 
  Firestore Security Rules
- 
- Caching
  
  Pagination
  
  Profile Image Handling
- 
  Testing - Unit Testing Within Service Layer
 
 */

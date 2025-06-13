@@ -4,23 +4,23 @@ class VocabSheetModel: Identifiable, Codable {
     
     var id: String
     var name: String
-    var cards: [VocabCardModel]
     var createdBy: String // Profile ID
     var totalCards: Int
     var lastReviewed: Date?
     var lastUpdated: Date
     var createdAt: Date
+    var isSynced: Bool // isSynced is equal to whether
     
     // Initializer to create a VocabSheetModel instance
-    init(id: String, name: String, cards: [VocabCardModel], createdBy: String, totalCards: Int, lastReviewed: Date?, lastUpdated: Date, createdAt: Date) {
+    init(id: String, name: String, createdBy: String, totalCards: Int, lastReviewed: Date?, lastUpdated: Date, createdAt: Date, isSynced: Bool) {
         self.id = id
         self.name = name
-        self.cards = cards
         self.createdBy = createdBy
         self.totalCards = totalCards
         self.lastReviewed = lastReviewed
         self.lastUpdated = lastUpdated
         self.createdAt = createdAt
+        self.isSynced = isSynced
     }
     
     // MARK: - Convert to Firestore
@@ -29,12 +29,12 @@ class VocabSheetModel: Identifiable, Codable {
         return [
             "id": id,
             "name": name,
-            "cards": cards.map { $0.toFireStoreData() }, // Convert cards to dictionary format
             "createdBy": createdBy,
             "totalCards": totalCards,
             "lastReviewed": lastReviewed?.timeIntervalSince1970 ?? NSNull(), // Store as Unix timestamp
             "lastUpdated": lastUpdated.timeIntervalSince1970,
-            "createdAt": createdAt.timeIntervalSince1970
+            "createdAt": createdAt.timeIntervalSince1970,
+            "isSynced": isSynced
         ]
     }
     // MARK: - Convert from Firestore Format
@@ -46,7 +46,7 @@ class VocabSheetModel: Identifiable, Codable {
               let totalCards = data["totalCards"] as? Int,
               let lastUpdatedTimestamp = data["lastUpdated"] as? Double,
               let createdAtTimestamp = data["createdAt"] as? Double,
-              let cardsData = data["cards"] as? [[String: Any]] else {
+              let isSynced = data["isSynced"] as? Bool else {
             return nil
         }
         
@@ -54,27 +54,22 @@ class VocabSheetModel: Identifiable, Codable {
         let lastReviewedTimestamp = data["lastReviewed"] as? Double
         let lastReviewed = lastReviewedTimestamp != nil ? Date(timeIntervalSince1970: lastReviewedTimestamp!) : nil
         // Convert each Firestore dictionary back into VocabCardModel objects
-        let cards = cardsData.compactMap { VocabCardModel.fromFireStoreData($0) }
 
-        return VocabSheetModel(id: id, name: name, cards: cards, createdBy: createdBy, totalCards: totalCards, lastReviewed: lastReviewed, lastUpdated: Date(timeIntervalSince1970: lastUpdatedTimestamp), createdAt: Date(timeIntervalSince1970: createdAtTimestamp))
+        return VocabSheetModel(id: id, name: name, createdBy: createdBy, totalCards: totalCards, lastReviewed: lastReviewed, lastUpdated: Date(timeIntervalSince1970: lastUpdatedTimestamp), createdAt: Date(timeIntervalSince1970: createdAtTimestamp), isSynced: isSynced)
     }
     
     // MARK: - Convert to SQLite
     // Converts the model into a dictionary format suitable for SQLite storage
     func toSQLite() -> [String: Any] {
-        // Encode cards array into a JSON string
-        let encodedCards = try? JSONEncoder().encode(cards)
-        let cardsString = encodedCards != nil ? String(data: encodedCards!, encoding: .utf8) ?? "[]" : "[]"
-        
         return [
             "id": id,
             "name": name,
-            "cards": cardsString,
             "createdBy": createdBy,
             "totalCards": totalCards,
             "lastUpdated": lastUpdated.timeIntervalSince1970,
             "lastReviewed": lastReviewed?.timeIntervalSince1970 ?? NSNull(),
-            "createdAt": createdAt.timeIntervalSince1970
+            "createdAt": createdAt.timeIntervalSince1970,
+            "isSynced": isSynced
         ]
     }
     
@@ -85,21 +80,14 @@ class VocabSheetModel: Identifiable, Codable {
         guard let id = data["id"] as? String,  // Unique ID of the vocab sheet
               let name = data["name"] as? String, // Name of the vocab sheet
               
-              // Extract the stored JSON string representation of cards
-              let cardsString = data["cards"] as? String,
-              
-              // Convert the JSON string into Data format
-              let cardsData = cardsString.data(using: .utf8),
-              
-              // Decode the Data back into an array of VocabCardModel objects
-              let decodedCards = try? JSONDecoder().decode([VocabCardModel].self, from: cardsData),
-              
+
               let createdBy = data["createdBy"] as? String, // ID of the user who created it
               let totalCards = data["totalCards"] as? Int, // Number of vocab cards
               
               // Extract timestamps stored as Unix time (seconds since 1970)
               let lastUpdatedTimestamp = data["lastUpdated"] as? Double, // Last time the sheet was updated
-              let createdAtTimestamp = data["createdAt"] as? Double // When the sheet was created
+              let createdAtTimestamp = data["createdAt"] as? Double, // When the sheet was created
+              let isSynced = data["isSynced"] as? Bool // if sheet is synced to firebase
         else {
             // If any of the required fields are missing or of the wrong type, return nil
             return nil
@@ -117,12 +105,12 @@ class VocabSheetModel: Identifiable, Codable {
         return VocabSheetModel(
             id: id,
             name: name,
-            cards: decodedCards,
             createdBy: createdBy,
             totalCards: totalCards,
-            lastReviewed: lastReviewed ?? Date(), // Use current date if lastReviewed is nil
+            lastReviewed: lastReviewed, // Use current date if lastReviewed is nil
             lastUpdated: lastUpdated,
-            createdAt: createdAt
+            createdAt: createdAt,
+            isSynced: isSynced
         )
     }
 

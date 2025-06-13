@@ -4,25 +4,25 @@
 //
 //  Created by Austin William Tucker on 11/29/24.
 //
-
 import SwiftUI
 
-
 struct VocabSheetView: View {
-    @StateObject private var viewModel = VocabSheetViewModel() // Intiialize the viewmodel
-    let userId: String // PAss in the userId to fetch the profile
-    @Binding var selectedTab: Tab // Within Main Tab View can navigate to hear
-    
-    
-    
+    @StateObject private var viewModel: VocabSheetViewModel
+    let userId: String
+    @Binding var selectedTab: Tab
+
+    init(userId: String, selectedTab: Binding<Tab>, vocabSheetService: VocabSheetService) {
+        self.userId = userId
+        self._selectedTab = selectedTab
+        self._viewModel = StateObject(wrappedValue: VocabSheetViewModel(vocabSheetService: vocabSheetService))
+    }
+
     var body: some View {
         VStack {
             if viewModel.isLoading {
-                // Show a loading indicator
                 ProgressView("Loading Vocab Sheets...")
                     .padding()
             } else if let errorMessage = viewModel.errorMessage {
-                // Show an error message
                 VStack {
                     Text("Error")
                         .font(.headline)
@@ -31,7 +31,7 @@ struct VocabSheetView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                     Button(action: {
-                        viewModel.fetchUserProfile(userId: userId)
+                        viewModel.fetchVocabSheets()
                     }) {
                         Text("Retry")
                             .padding()
@@ -41,17 +41,45 @@ struct VocabSheetView: View {
                     }
                 }
                 .padding()
+            } else {
+                // List of User's Vocab Sheets
+                List(viewModel.vocabSheets) { sheet in
+                    NavigationLink(destination: VocabCardsView(
+                        vocabSheetId: sheet.id,
+                        userId: userId,
+                        vocabCardService: VocabCardService())) {
+                        VStack(alignment: .leading) {
+                            Text(sheet.name)
+                                .font(.headline)
+                            Text("Total Cards: \(sheet.totalCards)")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+                .listStyle(InsetGroupedListStyle())
             }
-            
-            // MARK: - Needs List of All the Vocab Sheet A User Has
-            
-            
+        }
+        .onAppear {
+            viewModel.fetchVocabSheets()
+        }
+        .navigationTitle("My Vocab Sheets")
+        .toolbar {
+            Button(action: {
+                viewModel.addVocabSheet(name: "New Sheet", createdBy: userId)
+            }) {
+                Image(systemName: "plus")
+            }
         }
     }
 }
 
 struct VocabSheetView_Previews: PreviewProvider {
     static var previews: some View {
-        VocabSheetView(userId: "sampleUserId")
+        VocabSheetView(
+            userId: "sampleUserId",
+            selectedTab: .constant(.vocab),
+            vocabSheetService: VocabSheetService()
+        )
     }
 }

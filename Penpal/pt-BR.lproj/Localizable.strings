@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "Viagem";
 "sports" = "Esportes";
 "culture" = "Cultura";
@@ -14,7 +14,7 @@
 "work" = "Trabalho";
 "art" = "Arte";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "E-mail";
 "phone_number" = "Número de telefone";
 "description" = "Descrição";
@@ -25,14 +25,14 @@
 "proficiency" = "Nível de proficiência";
 "goals" = "Metas";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "Título";
 "description" = "Descrição";
 "link" = "Link da reunião";
 "status" = "Status";
 "participants" = "Participantes";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "Janeiro";
 "february" = "Fevereiro";
 "march" = "Março";
@@ -46,7 +46,7 @@
 "november" = "Novembro";
 "december" = "Dezembro";
 
-//MARK: - Days of the Week
+/* MARK: - Days of the Week */
 "monday" = "Segunda-feira";
 "tuesday" = "Terça-feira";
 "wednesday" = "Quarta-feira";
@@ -55,35 +55,35 @@
 "saturday" = "Sábado";
 "sunday" = "Domingo";
 
-// MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "Início";
 "study_tab" = "Estudo";
 "penpal_tab" = "Penpal";
 "profile_tab" = "Perfil";
 "messages_tab" = "Mensagens";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "Calendário";
 "schedule" = "Agenda";
 "pending" = "Pendente";
 "accepted" = "Aceito";
 "declined" = "Recusado";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "Data";
 "time" = "Hora";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "Interesses";
 "music" = "Música";
 "reading" = "Leitura";
 "tech" = "Tecnologia";
 "writing" = "Escrita";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "Oi";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "Qual é o seu e-mail?";
 "askName" = "Qual é o seu nome?";
 "askTimeZone" = "Qual é o seu fuso horário?";

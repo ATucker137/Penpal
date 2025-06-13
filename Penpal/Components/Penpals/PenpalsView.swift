@@ -9,7 +9,7 @@ import SwiftUI
 
 // MARK: - Main Penpal View
 // This view displays a swipeable list of potential penpals with filters and action buttons.
-struct PenpalView: View {
+struct PenpalsView: View {
     @StateObject private var viewModel = PenpalViewModel()
 
     // MARK: - Filtering State Variables

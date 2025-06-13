@@ -19,7 +19,7 @@ class TopicService: TopicServiceProtocol {
     
     private let db = Firestore.firestore()
     
-    func fetchTopic(
+    // TODO: - Must Add Functions Topic Service
     
     
 }

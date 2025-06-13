@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Restrict access to user documents
+    match /users/{userId} {
+      
+      // Read access to own profile
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Update only `isOnline` and `lastActive` by authenticated user
+      allow update: if request.auth != null &&
+                    request.auth.uid == userId &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isOnline', 'lastActive']);
+      
+      // Optional: allow create if using signup logic
+      allow create: if request.auth != null && request.auth.uid

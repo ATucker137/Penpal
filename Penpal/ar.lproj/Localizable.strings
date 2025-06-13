@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "سفر";
 "sports" = "رياضة";
 "culture" = "ثقافة";
@@ -14,7 +14,7 @@
 "work" = "عمل";
 "art" = "فن";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "بريد إلكتروني";
 "phone_number" = "رقم الهاتف";
 "description" = "وصف";
@@ -25,14 +25,14 @@
 "proficiency" = "مستوى الإتقان";
 "goals" = "أهداف";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "عنوان";
 "description" = "وصف";
 "link" = "رابط الاجتماع";
 "status" = "حالة";
 "participants" = "المشاركون";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "يناير";
 "february" = "فبراير";
 "march" = "مارس";
@@ -46,7 +46,7 @@
 "november" = "نوفمبر";
 "december" = "ديسمبر";
 
-//MARK: -  Days of the Week
+/* MARK: -  Days of the Week */
 "monday" = "الاثنين";
 "tuesday" = "الثلاثاء";
 "wednesday" = "الأربعاء";
@@ -55,35 +55,35 @@
 "saturday" = "السبت";
 "sunday" = "الأحد";
 
-// MARK: - Tab Names:
+/* MARK: - Tab Names: */
 "home_tab" = "الصفحة الرئيسية";
 "study_tab" = "الدراسة";
 "penpal_tab" = "صديق المراسلة";
 "profile_tab" = "الملف الشخصي";
 "messages_tab" = "الرسائل";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "التقويم";
 "schedule" = "الجدول الزمني";
 "pending" = "قيد الانتظار";
 "accepted" = "مقبول";
 "declined" = "مرفوض";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "التاريخ";
 "time" = "الوقت";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "الاهتمامات";
 "music" = "الموسيقى";
 "reading" = "القراءة";
 "tech" = "التكنولوجيا";
 "writing" = "الكتابة";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "مرحبًا";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "ما هو بريدك الإلكتروني؟";
 "askName" = "ما هو اسمك؟";
 "askTimeZone" = "ما هي منطقتك الزمنية؟";
@@ -100,5 +100,3 @@
 "changeEmail" = "تغيير البريد الإلكتروني";
 "resendEmailStatement" = "لم تستلم رمزاً؟";
 "resend" = "إعادة الإرسال";
-
-

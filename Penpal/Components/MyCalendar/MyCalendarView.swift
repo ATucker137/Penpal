@@ -20,8 +20,6 @@
  NavigationLink("Go to Second View") {
                  SecondView()
              }
- 
- 
  */
 
 import SwiftUI

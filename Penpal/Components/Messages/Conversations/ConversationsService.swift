@@ -12,7 +12,6 @@ import FirebaseFirestoreSwift
 import Combine
 
 // Service responsible for handling conversation-related Firestore operations
-// TODO: - Chatgpt Complains about the  whereField
 // TODO: - Change The Delete Conversation So Only the User thats deleting it will delete it on their end but not the penpal id
 class ConversationsService {
     
@@ -28,7 +27,7 @@ class ConversationsService {
         removeListener() // Remove any existing listener to prevent duplicates
         
         listener = db.collection("conversations")
-            .whereField("userId", isEqualTo: userId) // Filters conversations where user is a participant (potential issue: should use arrayContains for multiple participants)
+            .whereField("participants", arrayContains: userId)
             .order(by: "lastUpdated", descending: true) // Orders conversations by most recent activity
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else {
@@ -67,8 +66,7 @@ class ConversationsService {
         // Create a new conversation model
         let newConversation = ConversationsModel(
             id: conversationId,
-            userId: userId,
-            penpalId: penpalId,
+            participants: [userId, penpalId],
             lastMessage: initialMessage,
             lastUpdated: Date()
         )
@@ -97,55 +95,73 @@ class ConversationsService {
         }
     }
     
-    // MARK: - Deletes a conversation between two users
-    func deleteConversation(userId: String, conversationId: String, penpalId: String) {
+    // MARK: - Update Conversation Last Message
+    func updateConversationLastMessage(conversationId: String, message: String, lastUpdated: Date) {
         let db = Firestore.firestore()
-        
-        // Reference to the conversation document
+        let ref = db.collection("conversations").document(conversationId)
+
+        ref.updateData([
+            "lastMessage": message,
+            "lastUpdated": Timestamp(date: lastUpdated)
+        ]) { error in
+            if let error = error {
+                print("Error updating conversation last message: \(error.localizedDescription)")
+            } else {
+                print("Successfully updated conversation last message.")
+            }
+        }
+    }
+
+    // MARK: - Delete Conversation
+    func deleteConversation(userId: String, conversationId: String, penpalId: String, completion: @escaping (Bool) -> Void) {
+        let db = Firestore.firestore()
+
         let conversationRef = db.collection("conversations").document(conversationId)
         let userRef = db.collection("users").document(userId)
-        let penpalRef = db.collection("users").document(penpalId)
-        
-        // Start a Firestore transaction to ensure consistency
+
         db.runTransaction({ (transaction, errorPointer) -> Any? in
-            // Fetch the conversation document
             guard let conversationSnapshot = try? transaction.getDocument(conversationRef),
-                  let conversationData = conversationSnapshot.data(),
-                  let currentUserId = conversationData["userId"] as? String,
-                  let currentPenpalId = conversationData["penpalId"] as? String
+                  let data = conversationSnapshot.data(),
+                  let participants = data["participants"] as? [String]
             else {
-                print("Conversation data not found or malformed.")
+                print("Conversation data missing or malformed.")
                 return nil
             }
-            
-            // Ensure the user requesting deletion is a participant
-            if currentUserId != userId && currentPenpalId != userId {
-                print("User not authorized to delete this conversation.")
+
+            // Ensure the current user is part of the conversation
+            guard participants.contains(userId) else {
+                print("User not a participant in this conversation.")
                 return nil
             }
-            
-            // Remove conversation ID from both users' documents
+
+            // Mark the conversation as deleted for the current user
+            let deletedFor = data["deletedFor"] as? [String] ?? []
+            if !deletedFor.contains(userId) {
+                var updatedDeletedFor = deletedFor
+                updatedDeletedFor.append(userId)
+                transaction.updateData(["deletedFor": updatedDeletedFor], forDocument: conversationRef)
+            }
+
+            // Remove from user's "conversations" list (if you store it)
             transaction.updateData([
                 "conversations": FieldValue.arrayRemove([conversationId])
             ], forDocument: userRef)
-            
-            transaction.updateData([
-                "conversations": FieldValue.arrayRemove([conversationId])
-            ], forDocument: penpalRef)
-            
-            // If both users have removed the conversation, delete the conversation document
-            if currentUserId == userId || currentPenpalId == userId {
+
+            // If both users have deleted the conversation, delete it entirely
+            if Set(updatedDeletedFor).isSuperset(of: Set(participants)) {
                 transaction.deleteDocument(conversationRef)
-                print("Conversation deleted from Firestore.")
             }
-            
+
             return nil
-        }, completion: { (object, error) in
+        }, completion: { (_, error) in
             if let error = error {
-                print("Error deleting conversation: \(error.localizedDescription)")
+                print("Failed to delete conversation: \(error.localizedDescription)")
+                completion(false)
             } else {
-                print("Conversation deletion process completed.")
+                print("Conversation deletion handled successfully.")
+                completion(true)
             }
         })
     }
+
 }

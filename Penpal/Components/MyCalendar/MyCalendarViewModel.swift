@@ -23,7 +23,8 @@ class MyCalendarViewModel: ObservableObject {
     @Published var meetingViewModel: MeetingViewModel
     
     // MARK: - Private Properties
-    
+    private let sqliteManager = SQLiteManager() // Local storage
+
     private var userId: String? {
         return UserSession.shared.userId
     }
@@ -45,6 +46,7 @@ class MyCalendarViewModel: ObservableObject {
                 switch result {
                 case .success(let meeting):
                     self?.meeting = meeting
+                    self?.sqliteManager.insertMeeting(meeting)
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
@@ -59,6 +61,8 @@ class MyCalendarViewModel: ObservableObject {
                 switch result {
                 case .success(let fetchedMeetings):
                     self?.meetings = fetchedMeetings // Update the published meetings
+                    self?.sqliteManager.cacheMeetings(fetchedMeetings)
+
                 case .failure(let error):
                     self?.errorMessage = "Error fetching meetings: \(error.localizedDescription)"
                 }
@@ -69,37 +73,29 @@ class MyCalendarViewModel: ObservableObject {
     
     // MARK: - Save Event
     func saveCalendar(_ meeting: Meeting) {
-        
-    }
-    
-    // MARK: - Invitation Handling
-    // Add the invitation depending on the user id
-    // TODO: - Need to add to Service Layer
-    func acceptMeeting(meetingId: String) {
-        // Delegate the action to MeetingViewModel
-        meetingViewModel.acceptMeeting(userId: userId, meetingId: meetingId){ [weak self] result in
-            switch result {
-            case .success:
-                // Optionally handle any UI updates or refresh calendar here
-                self?.fetchCalendar()  // Re-fetch calendar or update state
-            case .failure(let error):
-                self?.errorMessage = error.localizedDescription
+        // Save to Firestore via your service
+        service.saveMeeting(meeting) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    // Save to SQLite after remote save
+                    self?.sqliteManager.insertMeeting(meeting)
+                    self?.fetchAllMeetings() // Refresh from Firestore
+                case .failure(let error):
+                    self?.errorMessage = "Error saving meeting: \(error.localizedDescription)"
+                }
             }
         }
+        
     }
     
-    // Add the invitation depending on user id
-    // TODO: - Need to add to Service Layer
-    // Doesn't really need to be
-    func declineInvitation(_ meeting: Meeting) {
-        // TODO: Implement invitation decline logic
-        
-        // For The User that we have
-        
-        // Append the Meeting To The Users Calendar
-        
-        // Changing the status as wellfrom pending to declined
-        
+    
+    
+    // MARK: - Load meetings from SQLite
+    func loadMeetingsFromCache() {
+        DispatchQueue.main.async {
+            self.meetings = self.sqliteManager.fetchMeetings()
+        }
     }
     
 }

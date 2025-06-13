@@ -5,24 +5,12 @@
 //  Created by Austin William Tucker on 12/14/24.
 //
 //
-/*
- 
- Home Page
- 
- First Calendar Of whats coming up - maybe in like a card view
- 
- 
- Maybe In Top Right Corner have a calendar
- 
- Any Requests for matches
- 
- Messages Notification
- */
+
 
 struct HomeView: View {
     @EnvironmentObject var profileViewModel: ProfileViewModel
     @EnvironmentObject var quizViewModel: QuizViewModel
-    @EnvironmentObject var messageViewModel: MessageViewModel
+    @EnvironmentObject var messageViewModel: MessagesViewModel
     
     @ObservedObject var homeViewModel: HomeViewModel // Use @ObservedObject here instead of @StateObject
     @Binding var selectedTab: Tab
@@ -61,6 +49,7 @@ struct HomeView: View {
 
 struct HomeViews_Previews: PreviewProvider {
     /*
+     TODO: - Preview Not Currently Working
     static var previews: some View {
         //HomeView(profileViewModel: <#T##ProfileViewModel#>, quizViewModel: <#T##_#>, messageViewModel: <#T##_#>, homeViewModel: <#T##HomeViewModel#>)
     }

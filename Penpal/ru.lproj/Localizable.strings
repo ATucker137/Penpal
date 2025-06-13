@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "Путешествия";
 "sports" = "Спорт";
 "culture" = "Культура";
@@ -14,7 +14,7 @@
 "work" = "Работа";
 "art" = "Искусство";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "Электронная почта";
 "phone_number" = "Номер телефона";
 "description" = "Описание";
@@ -25,14 +25,14 @@
 "proficiency" = "Уровень владения";
 "goals" = "Цели";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "Заголовок";
 "description" = "Описание";
 "link" = "Ссылка на встречу";
 "status" = "Статус";
 "participants" = "Участники";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "Январь";
 "february" = "Февраль";
 "march" = "Март";
@@ -46,7 +46,7 @@
 "november" = "Ноябрь";
 "december" = "Декабрь";
 
-//MARK: -  Days of the Week
+/* MARK: - Days of the Week */
 "monday" = "Понедельник";
 "tuesday" = "Вторник";
 "wednesday" = "Среда";
@@ -55,35 +55,35 @@
 "saturday" = "Суббота";
 "sunday" = "Воскресенье";
 
-//MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "Главная";
 "study_tab" = "Учеба";
 "penpal_tab" = "Пенпал";
 "profile_tab" = "Профиль";
 "messages_tab" = "Сообщения";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "Календарь";
 "schedule" = "Расписание";
 "pending" = "В ожидании";
 "accepted" = "Принято";
 "declined" = "Отклонено";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "Дата";
 "time" = "Время";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "Интересы";
 "music" = "Музыка";
 "reading" = "Чтение";
 "tech" = "Технологии";
 "writing" = "Письмо";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "Привет";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "Какой у вас адрес электронной почты?";
 "askName" = "Как вас зовут?";
 "askTimeZone" = "Какой у вас часовой пояс?";

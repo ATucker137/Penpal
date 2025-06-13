@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "旅行";
 "sports" = "スポーツ";
 "culture" = "文化";
@@ -14,7 +14,7 @@
 "work" = "仕事";
 "art" = "アート";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "メール";
 "phone_number" = "電話番号";
 "description" = "説明";
@@ -25,14 +25,14 @@
 "proficiency" = "熟練度";
 "goals" = "目標";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "タイトル";
 "description" = "説明";
 "link" = "ミーティングリンク";
 "status" = "ステータス";
 "participants" = "参加者";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "1月";
 "february" = "2月";
 "march" = "3月";
@@ -46,7 +46,7 @@
 "november" = "11月";
 "december" = "12月";
 
-//MARK: -  Days of the Week
+/* MARK: - Days of the Week */
 "monday" = "月曜日";
 "tuesday" = "火曜日";
 "wednesday" = "水曜日";
@@ -55,35 +55,35 @@
 "saturday" = "土曜日";
 "sunday" = "日曜日";
 
-//MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "ホーム";
 "study_tab" = "勉強";
 "penpal_tab" = "ペンパル";
 "profile_tab" = "プロフィール";
 "messages_tab" = "メッセージ";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "カレンダー";
 "schedule" = "スケジュール";
 "pending" = "保留中";
 "accepted" = "承認済み";
 "declined" = "拒否済み";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "日付";
 "time" = "時間";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "興味";
 "music" = "音楽";
 "reading" = "読書";
 "tech" = "技術";
 "writing" = "執筆";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "やあ";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "メールアドレスは何ですか？";
 "askName" = "お名前は何ですか？";
 "askTimeZone" = "タイムゾーンは何ですか？";
