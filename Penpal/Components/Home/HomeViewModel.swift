@@ -8,7 +8,6 @@
 // CalendarViewModel Brought In As Home
 // MessagesViewModel Brought In As Home
 // PenpalViewModel Brought In As Home
-// CalendarViewModel Brought In As Home
 // ProfileViewModel Brought Into Home
 
 
@@ -40,7 +39,7 @@ class HomeViewModel: ObservableObject {
             isLoading = false
         }
     
-    //MARK: - Posible Functions Needed
+    //MARK: - Possible Functions Needed
     
     
     

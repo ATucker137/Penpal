@@ -99,15 +99,47 @@ class MeetingViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Accepting Meeting Invitation
-    func acceptMeeting(userId: String, meetingId: String) {
-        
-        // Accept The Meeting Given The User
-        
+    // MARK: - Invitation Handling
+    // Add the invitation depending on the user id
+    func acceptMeeting(meetingId: String) {
+        // Delegate the action to MeetingViewModel (remote Firestore)
+        meetingService.acceptMeeting(userId: userId, meetingId: meetingId) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    // Update local SQLite cache
+                    self?.sqliteManager.updateMeetingStatus(meetingId: meetingId, status: "accepted")
+                    self?.fetchCalendar() // Re-fetch or update state
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
+
     
-    // MARK: - Declining Meeting Invitation
-    func declineMeeting(meetingId: String) {
-        // Basically Change the Meeting to Declined
+    // Add the invitation depending on user id
+    // TODO: - Need to add to Service Layer
+    func declineMeeting(_ meeting: Meeting) {
+        // Update status in Firestore
+        meetingService.updateMeetingStatus(meetingId: meeting.id, status: "declined") { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    var declinedMeeting = meeting
+                    declinedMeeting.status = "declined"
+
+                    // Save updated meeting locally
+                    self?.sqliteManager.updateMeeting(declinedMeeting.toMeetingModel())
+
+                    // Optionally update UI
+                    self?.fetchAllMeetings()
+
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
+
 }

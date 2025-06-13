@@ -1,20 +1,20 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "Reisen";
 "sports" = "Sport";
 "culture" = "Kultur";
-"food" = "Essen";                   // Correct, but "Kulinarik" could also work if focusing on cultural context
+"food" = "Essen";                   /* Correct, but "Kulinarik" could also work if focusing on cultural context */
 "movies" = "Filme";
 "work" = "Arbeit";
 "art" = "Kunst";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "E-Mail";
 "phone_number" = "Telefonnummer";
 "description" = "Beschreibung";
@@ -22,17 +22,17 @@
 "last_name" = "Nachname";
 "country" = "Land";
 "language" = "Sprache";
-"proficiency" = "Sprachniveau";     // Changed from "Kompetenzstufe" (Sprachniveau is more specific to language proficiency)
+"proficiency" = "Sprachniveau";     /* Changed from "Kompetenzstufe" (Sprachniveau is more specific to language proficiency) */
 "goals" = "Ziele";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "Titel";
 "description" = "Beschreibung";
 "link" = "Meeting-Link";
 "status" = "Status";
 "participants" = "Teilnehmer";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "Januar";
 "february" = "Februar";
 "march" = "März";
@@ -46,7 +46,7 @@
 "november" = "November";
 "december" = "Dezember";
 
-//MARK: -  Days of the Week
+/* MARK: -  Days of the Week */
 "monday" = "Montag";
 "tuesday" = "Dienstag";
 "wednesday" = "Mittwoch";
@@ -55,35 +55,35 @@
 "saturday" = "Samstag";
 "sunday" = "Sonntag";
 
-// MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "Startseite";
 "study_tab" = "Studium";
 "penpal_tab" = "Penpal";
 "profile_tab" = "Profil";
 "messages_tab" = "Nachrichten";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "Kalender";
 "schedule" = "Zeitplan";
 "pending" = "Ausstehend";
 "accepted" = "Akzeptiert";
 "declined" = "Abgelehnt";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "Datum";
 "time" = "Uhrzeit";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "Interessen";
 "music" = "Musik";
 "reading" = "Lesen";
 "tech" = "Technologie";
 "writing" = "Schreiben";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "Hallo";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "Wie lautet deine E-Mail-Adresse?";
 "askName" = "Wie heißt du?";
 "askTimeZone" = "In welcher Zeitzone bist du?";
@@ -100,4 +100,3 @@
 "changeEmail" = "E-Mail ändern";
 "resendEmailStatement" = "Keinen Code erhalten?";
 "resend" = "Erneut senden";
-

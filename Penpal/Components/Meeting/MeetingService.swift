@@ -5,14 +5,12 @@
 //  Created by Austin William Tucker on 12/29/24.
 //
 
-// Within this file should outline the connection with Firebase
-
-
 import FirebaseFirestore
 import Firebase
-import Firebase
+
 
 // TODO: Batch Operation will probably be needed for updating a user schedule. Would also probably need the user to be able to acccept the meeting as well
+// TODO: - Create Os Logging For Debuging as well print for debug mode as well
 
 
 
@@ -24,7 +22,7 @@ class MeetingService {
     
     
     // MARK: - Create Meeting Through Firestore
-    func createMeeting(meeting: Meeting, completion: @escaping (Result<Void,Error) -> Void) {
+    func createMeeting(meeting: Meeting, completion: @escaping (Result<Void,Error>) -> Void) {
         do {
             // Create the meeting document from Firestore
             try db.collection(collectionName).document(meeting.id).setData(from: meeting) {
@@ -40,22 +38,18 @@ class MeetingService {
     }
     
     // MARK: - Delete Meeting Through Firestore
-    func deleteMeeting(meeting: Meeting, completion: @escaping (Result<Void,Error) -> Void) {
-        do {
-            // Delete the meeting document from Firestore
-            try db.collection(collectionName).document(meeting.id).delete {
-                error in
-                if let error = error {
-                    completion(.failure(error))
-                }
-                else {
-                    completion(.success(()))
-                }
+    func deleteMeeting(meeting: Meeting, completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection(collectionName).document(meeting.id).delete { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
             }
         }
     }
+
     // MARK: - // The catch let error will never be triggered because Firestor wont throw errors The setData(from:merge:) method
-    func updateMeeting(meeting: Meeting, completion: @escaping (Result<Void,Error) -> Void) {
+    func updateMeeting(meeting: Meeting, completion: @escaping (Result<Void,Error>) -> Void) {
         db.collection(collectionName).document(meeting.id).setData(from: meeting, merge: true) { error in
                 if let error = error {
                     completion(.failure(error))
@@ -91,7 +85,7 @@ class MeetingService {
     }
     
     
-    // Note: - First implementation of Batch Processing - Detailed Explanation
+    // Note: - First implementation of Batch Processing - Detailed Explanation Below
     // MARK: -  Accept Meeting Through Firestore
     func acceptMeeting(meetingId: String, userId: String, completion: @escaping (Result<Meeting, Error>) -> Void) {
 
@@ -182,11 +176,11 @@ class MeetingService {
         
         
     
-    // Function For Generating the Zoom Link
+    // MARK: - Function For Generating the Zoom Link
     func generateZoomMeeting() {
         
     }
-    
+    // MARK: - Add Discussion Topics To Meeting
     func addDiscussionTopicsToMeeting(discussionTopic: String, meetingId: String) {
         // Call Fetch Meeting
         // Fetch the meeting using the existing fetchMeeting method
@@ -216,7 +210,7 @@ class MeetingService {
             }
         }
     }
-    // Editing Discussion TOpics
+    // TODO: - Add Function For Editing Discussion Tpics
     
     
 }

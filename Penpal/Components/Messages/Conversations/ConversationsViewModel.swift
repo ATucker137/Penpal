@@ -46,37 +46,82 @@ class ConversationViewModel: ObservableObject {
     // MARK: - Create Conversation
     // Create a new conversation with a specific penpal and an initial message
     func createConversation(penpalId: String, initialMessage: String) {
-        // Calls the service to create the conversation and pass back the conversationId if successful
         service.createConversation(userId: userId, penpalId: penpalId, initialMessage: initialMessage) { [weak self] conversationId in
-            guard let conversationId = conversationId else { return }
-            
-            // Refresh the conversations list after the new conversation is created
-            self?.fetchConversations()
+            guard let self = self, let conversationId = conversationId else { return }
+
+            let now = Date()
+            let participants = [self.userId, penpalId]
+
+            // 1. Insert into SQLite immediately
+            SQLiteManager.shared.insertSingleConversation(
+                conversationId: conversationId,
+                participants: participants,
+                lastMessage: initialMessage,
+                lastUpdated: now,
+                isSynced: true // Mark as synced since it was just written to Firestore
+            )
+
+            // 2. Update conversations list in UI
+            self.fetchConversations()
         }
     }
-    
+
     // MARK: - Delete Conversation
-    
-    // Delete a conversation for the current user only, not affecting the other user's conversation list
+
+    /// Delete a conversation for the current user only, not affecting the other user's conversation list
     func deleteConversation(conversationId: String, penpalId: String) {
         // Calls the service to remove the conversation from the backend
-        service.deleteConversation(userId: userId, conversationId: conversationId, penpalId: penpalId)
-        
-        // Removes the conversation locally for UI update
-        // This removes any conversations that have the given `conversationId`
-        self.conversations.removeAll { $0.id == conversationId }
+        service.deleteConversation(userId: userId, conversationId: conversationId, penpalId: penpalId) { [weak self] success in
+            guard let self = self else { return }
+
+            if success {
+                DispatchQueue.main.async {
+                    // Safely update UI only after confirming deletion succeeded
+                    self.conversations.removeAll { $0.id == conversationId }
+                }
+            } else {
+                // Optionally handle failure (e.g., show alert, retry)
+                print("Failed to delete conversation with id: \(conversationId)")
+            }
+        }
     }
+
     
     // MARK: - Search Conversations
     // Search for a conversation by a query string (e.g., message text)
     func searchInConversations(query: String) {
-        // Filters the conversations by checking if the `lastMessage` contains the search query
-        let filtered = conversations.filter { $0.lastMessage?.localizedCaseInsensitiveContains(query) ?? false }
-        
-        // Updates the `conversations` array with the filtered results
-        // The use of the `?? false` ensures that the search doesn't break if `lastMessage` is nil
-        self.conversations = filtered
+        // 1. Get cached results immediately
+        let cachedResults = SQLiteManager.shared.searchConversations(query: query, userId: userId)
+        self.conversations = cachedResults
+
+        // 2. Then fetch latest from Firestore to update cache and UI
+        service.fetchConversations(for: userId) { [weak self] latestConversations in
+            guard let self = self else { return }
+
+            // Cache the fresh data
+            SQLiteManager.shared.cacheConversations(latestConversations)
+
+            // Re-run the search on the updated cache
+            let updatedResults = SQLiteManager.shared.searchConversations(query: query, userId: self.userId)
+
+            DispatchQueue.main.async {
+                self.conversations = updatedResults
+            }
+        }
     }
+    
+    func updateConversationLastMessage(conversationId: String, message: String) {
+        let now = Date()
+
+        // Update Firestore
+        service.updateConversationLastMessage(conversationId: conversationId, message: message, lastUpdated: now)
+
+        // Update local SQLite for offline cache
+        SQLiteManager.shared.updateLastMessage(conversationId: conversationId, message: message, lastUpdated: now)
+    }
+
+
+    //TODO: - Create Did Select Conversation
     
     // MARK: - Deinitializer
     // Deinitializer to remove listeners when ViewModel is deallocated

@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "यात्रा";
 "sports" = "खेल";
 "culture" = "संस्कृति";
@@ -14,7 +14,7 @@
 "work" = "कार्य";
 "art" = "कला";
 
-//MARK: -  Profile Centric
+/* MARK: -  Profile Centric */
 "email" = "ईमेल";
 "phone_number" = "फोन नंबर";
 "description" = "विवरण";
@@ -25,14 +25,14 @@
 "proficiency" = "प्रवीणता स्तर";
 "goals" = "लक्ष्य";
 
-//MARK: -  Meeting Centric
+/* MARK: -  Meeting Centric */
 "title" = "शीर्षक";
 "description" = "विवरण";
 "link" = "बैठक लिंक";
 "status" = "स्थिति";
 "participants" = "सहभागी";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "जनवरी";
 "february" = "फ़रवरी";
 "march" = "मार्च";
@@ -46,7 +46,7 @@
 "november" = "नवंबर";
 "december" = "दिसंबर";
 
-//MARK: -  Days of the Week
+/* MARK: -  Days of the Week */
 "monday" = "सोमवार";
 "tuesday" = "मंगलवार";
 "wednesday" = "बुधवार";
@@ -55,35 +55,35 @@
 "saturday" = "शनिवार";
 "sunday" = "रविवार";
 
-//MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "होम";
 "study_tab" = "अध्यान";
 "penpal_tab" = "पेनपल";
 "profile_tab" = "प्रोफाइल";
 "messages_tab" = "संदेश";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "कैलेंडर";
 "schedule" = "कार्यसूची";
 "pending" = "पेंडिंग";
 "accepted" = "स्वीकृत";
 "declined" = "अस्वीकृत";
 
-// MARK: - Date And Time
+/* MARK: - Date And Time */
 "date" = "तारीख";
 "time" = "समय";
 
-// MARK: - Hobbies Or Interests
+/* MARK: - Hobbies Or Interests */
 "interests" = "रुचियाँ";
 "music" = "संगीत";
 "reading" = "पढ़ाई";
 "tech" = "प्रौद्योगिकी";
 "writing" = "लेखन";
 
-// MARK: - Greetings
+/* MARK: - Greetings */
 "hey" = "नमस्ते";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "आपका ईमेल क्या है?";
 "askName" = "आपका नाम क्या है?";
 "askTimeZone" = "आपका समय क्षेत्र क्या है?";

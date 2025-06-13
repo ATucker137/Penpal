@@ -75,4 +75,25 @@ class UserSession: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "userName")
         UserDefaults.standard.removeObject(forKey: "profileImageURL")
     }
+    
+    // MARK: - Logout and Clear All User Data
+    /// Logs out the user, clears session, and removes any cached local data.
+    /// This ensures no old user data persists if another user logs in on the same device.
+    func logoutAndClearUserData() {
+        // Sign out from Firebase
+        do {
+            try FirebaseAuthManager.shared.signOut()
+        } catch {
+            print("Error signing out: \(error.localizedDescription)")
+        }
+        
+        // Clear session state
+        clearSession()
+        
+        // Clear any local storage for
+        // Clear local SQLite cache (Conversations, Messages, Meetings, MyCalendar, VocabSheets, VocabCards, Profiles)
+        SQLiteManager.shared.clearAllLocalCaches()
+        // isLoggedIn will already be set to false by clearSession()
+    }
+
 }

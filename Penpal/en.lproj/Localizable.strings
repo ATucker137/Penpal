@@ -1,11 +1,11 @@
-//
-//  Untitled.swift
-//  Penpal
-//
-//  Created by Austin William Tucker on 1/24/25.
-//
+/*
+  Untitled.swift
+  Penpal
 
-//MARK: -  Topic Centric
+  Created by Austin William Tucker on 1/24/25.
+*/
+
+/* MARK: -  Topic Centric */
 "travel" = "Travel";
 "sports" = "Sports";
 "culture" = "Culture";
@@ -14,7 +14,7 @@
 "work" = "Work";
 "art" = "Art";
 
-//MARK: - Profile Centric
+/* MARK: - Profile Centric */
 "email" = "Email";
 "phone_number" = "Phone Number";
 "description" = "Description";
@@ -25,14 +25,14 @@
 "proficiency" = "Proficiency";
 "goals" = "Goals";
 
-//MARK: - Meeting Centric
+/* MARK: - Meeting Centric */
 "title" = " Title";
 "description" = "Description";
 "link" = "Meeting Link";
 "status" = "Status";
 "participants" = "Participants";
 
-//MARK: -  Months
+/* MARK: -  Months */
 "january" = "January";
 "february" = "February";
 "march" = "March";
@@ -46,7 +46,7 @@
 "november" = "November";
 "december" = "December";
 
-//MARK: - Days of the Week
+/* MARK: - Days of the Week */
 "monday" = "Monday";
 "tuesday" = "Tuesday";
 "wednesday" = "Wednesday";
@@ -55,35 +55,35 @@
 "saturday" = "Saturday";
 "sunday" = "Sunday";
 
-// MARK: - Tab Names
+/* MARK: - Tab Names */
 "home_tab" = "Home";
 "study_tab" = "Study";
 "penpal_tab" = "Penpal";
 "profile_tab" = "Profile";
 "messages_tab" = "Messages";
 
-// MARK: - Calendar and Schedule
+/* MARK: - Calendar and Schedule */
 "calendar" = "Calendar";
 "schedule" = "Schedule";
 "pending" = "Pending";
 "accepted" = "Accepted";
-"declined" = "Declined"
+"declined" = "Declined";
 
-// MARK: - Date And Time
-"date" = "Date"
-"time" = "Time"
+/* MARK: - Date And Time */
+"date" = "Date";
+"time" = "Time";
 
-// MARK: - Hobbies Or Interests
-"interests" = "Interests"
-"music" = "Music"
-"reading" = "Reading"
-"tech" = "Tech"
-"writing" = "Writing"
+/* MARK: - Hobbies Or Interests */
+"interests" = "Interests";
+"music" = "Music";
+"reading" = "Reading";
+"tech" = "Tech";
+"writing" = "Writing";
 
-// MARK: - Greetings
-"hey" = "Hey"
+/* MARK: - Greetings */
+"hey" = "Hey";
 
-// MARK: - Welcome Page Centric
+/* MARK: - Welcome Page Centric */
 "askEmail" = "What's your email?";
 "askName" = "What's your name?";
 "askTimeZone" = "What's your Time Zone?";
@@ -101,15 +101,14 @@
 "resendEmailStatement" = "Didn't receive a code?";
 "resend" = "Resend";
 
-//MARK: -
-"fullConvo" = "Have a Long Conversation" // Needs to be looked into
-"convoWithFamily" = "Conversation With Family"
-"readBooks" = "Read Books"
-"passExam" = "Pass Fluency Exam"
-"casualConvo" = "Casual Conversation"
-"interview" = "Complete Job Interview"
-"communicateEffectively" = "Communicate Effectively"
-// Something should be added for trip
+/* MARK: - Miscellaneous */
+"fullConvo" = "Have a Long Conversation"; /* Needs to be looked into */
+"convoWithFamily" = "Conversation With Family";
+"readBooks" = "Read Books";
+"passExam" = "Pass Fluency Exam";
+"casualConvo" = "Casual Conversation";
+"interview" = "Complete Job Interview";
+"communicateEffectively" = "Communicate Effectively";
+/* Something should be added for trip */
 
-
-// MARK: - Penpal Centric
+/* MARK: - Penpal Centric */
