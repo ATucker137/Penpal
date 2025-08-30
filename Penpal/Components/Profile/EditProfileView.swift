@@ -5,87 +5,100 @@
 //  Created by Austin William Tucker on 2/14/25.
 //
 
-/*
- This view allows users to edit their profile, including toggling notification preferences.
- It includes a custom toggle style (PinkToggleStyle) for a personalized UI.
- 
- 
- Possibly within Edit Profile Needs to Consider
- 
- Preferences
- 
- Settings
- 
- 
- */
+import SwiftUI
+import FirebaseFirestore
 
-import SwiftUI // Importing the SwiftUI framework for building the user interface
-
-
-// MARK:  - I think a lot of this will be needed for the allow notificaitons section of the WelcomePageview
 struct EditProfileView: View {
-    
-    // Binding to allow changes in this view to update the parent view's profile data
     @Binding var profile: Profile
-    
-    // States for managing toggle preferences (1h, 6h, 24h notifications)
-    @State private var notify1h = true
-    @State private var notify6h = false
-    @State private var notify24h = false
+
+    @State private var notificationSettings = NotificationSettings()
+    @State private var isLoadingSettings = true
 
     var body: some View {
-        Form { // A container to organize settings in sections
-            Section(header: Text("Notification Preferences")) { // Section for notification toggles
-                // Toggle for 1-hour notification, styled with PinkToggleStyle
-                Toggle("1 Hour Before", isOn: $notify1h)
-                    .toggleStyle(PinkToggleStyle()) // Applying custom toggle style
-                
-                // Toggle for 6-hour notification, styled with PinkToggleStyle
-                Toggle("6 Hours Before", isOn: $notify6h)
-                    .toggleStyle(PinkToggleStyle())
-                
-                // Toggle for 24-hour notification, styled with PinkToggleStyle
-                Toggle("24 Hours Before", isOn: $notify24h)
-                    .toggleStyle(PinkToggleStyle())
+        Form {
+            if isLoadingSettings {
+                ProgressView("Loading Notification Settings...")
+            } else {
+                Section(header: Text("Notification Preferences")) {
+                    Toggle("1 Hour Before", isOn: $notificationSettings.notify1HourBefore)
+                        .toggleStyle(PinkToggleStyle())
+                        .onChange(of: notificationSettings.notify1HourBefore) { _ in saveNotificationSettings() }
+
+                    Toggle("6 Hours Before", isOn: $notificationSettings.notify6HoursBefore)
+                        .toggleStyle(PinkToggleStyle())
+                        .onChange(of: notificationSettings.notify6HoursBefore) { _ in saveNotificationSettings() }
+
+                    Toggle("24 Hours Before", isOn: $notificationSettings.notify24HoursBefore)
+                        .toggleStyle(PinkToggleStyle())
+                        .onChange(of: notificationSettings.notify24HoursBefore) { _ in saveNotificationSettings() }
+                }
+                .padding(.vertical, 10)
             }
-            .padding(.vertical, 10) // Adds vertical padding to the section
         }
-        .navigationTitle("Edit Profile") // Title for the navigation bar
-        .navigationBarTitleDisplayMode(.inline) // Keeps the navigation title inline with the back button
+        .navigationTitle("Edit Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { loadNotificationSettings() }
+    }
+
+    private func loadNotificationSettings() {
+        guard let userId = UserSession.shared.userId else { return }
+
+        Firestore.firestore().collection("users").document(userId).getDocument { snapshot, error in
+            defer { isLoadingSettings = false }
+
+            guard let data = snapshot?.data(),
+                  let settingsData = data["notificationSettings"] as? [String: Any],
+                  let settings = NotificationSettings.fromFireStoreData(settingsData) else {
+                print("Failed to load settings or using default.")
+                return
+            }
+
+            notificationSettings = settings
+        }
+    }
+
+    private func saveNotificationSettings() {
+        guard let userId = UserSession.shared.userId else { return }
+
+        let data = notificationSettings.toFireStoreData()
+
+        Firestore.firestore().collection("users").document(userId).updateData([
+            "notificationSettings": data
+        ]) { error in
+            if let error = error {
+                print("Error saving notification settings: \(error)")
+            } else {
+                print("Notification settings saved.")
+            }
+        }
     }
 }
 
-// Custom toggle style that changes the bar color to pink when toggled on
 struct PinkToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack {
-            configuration.label // The text or label associated with the toggle
-            
-            Spacer() // Pushes the toggle to the right side
-            
-            // ZStack to create the toggle background and sliding circle
+            configuration.label
+            Spacer()
             ZStack {
-                RoundedRectangle(cornerRadius: 16) // Background shape for the toggle
-                    .fill(configuration.isOn ? Color.pink : Color.gray.opacity(0.3)) // Pink for "on," gray for "off"
-                    .frame(width: 50, height: 30) // Size of the toggle background
-                
-                Circle() // The circle that slides inside the toggle
-                    .fill(Color.white) // White color for the toggle circle
-                    .frame(width: 24, height: 24) // Size of the toggle circle
-                    .offset(x: configuration.isOn ? 10 : -10) // Moves the circle based on toggle state
-                    .animation(.easeInOut, value: configuration.isOn) // Smooth animation when toggling
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(configuration.isOn ? Color.pink : Color.gray.opacity(0.3))
+                    .frame(width: 50, height: 30)
+
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 24, height: 24)
+                    .offset(x: configuration.isOn ? 10 : -10)
+                    .animation(.easeInOut, value: configuration.isOn)
             }
             .onTapGesture {
-                configuration.isOn.toggle() // Toggles the state when tapped
+                configuration.isOn.toggle()
             }
         }
     }
 }
 
-// Preview structure to test and visualize the EditProfileView in Xcode
 struct EditProfileView_Previews: PreviewProvider {
     static var previews: some View {
-        // Providing a sample profile for preview purposes
         EditProfileView(profile: .constant(Profile(
             firstName: "Austin",
             lastName: "Tucker",

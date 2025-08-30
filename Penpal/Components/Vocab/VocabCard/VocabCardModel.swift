@@ -3,15 +3,18 @@
 //
 // Created by Austin William Tucker on 11/29/24.
 //
+import Foundation
 import FirebaseFirestore
+import FirebaseFirestoreSwift
+
 // MARK: - VocabCardModel
 /// A model representing a vocabulary card, with functionality to convert to and from Firestore data.
-class VocabCardModel: Codable, Identifiable {
+struct VocabCardModel: Codable, Identifiable {
     
     // MARK: - Properties
     
     /// Unique identifier for the vocabulary card.
-    var id: String
+    @DocumentID var id: String?
     /// Unique identifier for the vocabulary sheet.
     var sheetId: String
     /// Name or term of the vocabulary card (front of the card).
@@ -45,7 +48,7 @@ class VocabCardModel: Codable, Identifiable {
     ///   - updatedAt: Timestamp of the last update to the card.
     ///   - lastReviewed: The last time the card was reviewed by the user.
     ///   - isSynced: Whether or not the data has been synced to Firestore
-    init(id: String,sheetId: String, front: String, back: String, addedBy: String, favorited: Bool, createdAt: Date, updatedAt: Date, lastReviewed: Date? = nil, isSynced: Bool) {
+    init(id: String? = nil, sheetId: String, front: String, back: String, addedBy: String, favorited: Bool, createdAt: Date, updatedAt: Date, lastReviewed: Date? = nil, isSynced: Bool) {
         self.id = id
         self.sheetId = sheetId
         self.front = front
@@ -58,62 +61,11 @@ class VocabCardModel: Codable, Identifiable {
         self.isSynced = isSynced
     }
     
-    // MARK: - Send to Firestore
-    
-    /// Converts the `VocabCardModel` instance into a Firestore-compatible dictionary.
-    /// - Returns: A dictionary representation of the `VocabCardModel`.
-    func toFireStoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "id": id,
-            "sheetId": sheetId,
-            "front": front,
-            "back": back,
-            "addedBy": addedBy,
-            "favorited": favorited,
-            "createdAt": createdAt,
-            "updatedAt": updatedAt,
-            "isSynced": isSynced,
-        ]
-        
-        if let lastReviewed = lastReviewed {
-            data["lastReviewed"] = lastReviewed
-        }
-        
-        return data
-    }
-    
-    // MARK: - Get from Firestore
-    
-    /// Creates a `VocabCardModel` instance from Firestore data.
-    /// - Parameter data: A dictionary containing Firestore data.
-    /// - Returns: A `VocabCardModel` instance if the data is valid, otherwise `nil`.
-    static func fromFireStoreData(_ data: [String: Any]) -> VocabCardModel? {
-        guard let id = data["id"] as? String,
-              let sheetId = data["sheetId"] as? String,
-              let front = data["front"] as? String,
-              let back = data["back"] as? String,
-              let addedBy = data["addedBy"] as? String,
-              let favorited = data["favorited"] as? Bool,
-              let createdAtTimestamp = data["createdAt"] as? Timestamp,
-              let updatedAtTimestamp = data["updatedAt"] as? Timestamp,
-              let isSynced = data["isSynced"] as? Bool
-        else {
-            return nil
-        }
-
-        let createdAt = createdAtTimestamp.dateValue()
-        let updatedAt = updatedAtTimestamp.dateValue()
-        let lastReviewed = (data["lastReviewed"] as? Timestamp)?.dateValue()
-
-        return VocabCardModel(id: id, sheetId: sheetId, front: front, back: back, addedBy: addedBy, favorited: favorited, createdAt: createdAt, updatedAt: updatedAt, lastReviewed: lastReviewed, isSynced: isSynced)
-    }
-
-    
     // MARK: - toSQLite
     // Will convert VocabCardModel to SQLite data format
     func toSQLite() -> [String: Any] {
         return [
-            "id": self.id,
+            "id": self.id ?? UUID().uuidString,
             "sheetId": self.sheetId,
             "front": self.front,
             "back": self.back,
@@ -140,7 +92,7 @@ class VocabCardModel: Codable, Identifiable {
               let favorited = data["favorited"] as? Int,
               let createdAtTimestamp = data["createdAt"] as? Double,
               let updatedAtTimestamp = data["updatedAt"] as? Double,
-              let isSynced = data["isSynced"] as? Bool,
+              let isSynced = data["isSynced"] as? Bool
         else {
             return nil
         }

@@ -51,6 +51,8 @@ class HomeViewModel: ObservableObject {
         // TODO: - Create 'fetchAllPenpals'
         let allUsersPenpals: [PenpalsModel] = fetchAllPenpals()
         
+        // What could criterie be for filtering? new? have meetin gscheduled?
+        
         // Based off the criteria, pull
         /*
         let filteredPenpals = allUsersPenpals.filter {

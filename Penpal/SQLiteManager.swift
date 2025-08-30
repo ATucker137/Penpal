@@ -18,6 +18,8 @@ class SQLiteManager {
         self.createMyCalendarTable()
         self.createVocabCardTable()
         self.createVocabSheetTable()
+        self.createNotificationsTable()
+        self.createNotificationSettingsTable()
     }
     
     // MARK: - Creates SQLite Database
@@ -38,82 +40,366 @@ class SQLiteManager {
     
     }
     
+    // MARK: - Creates NotificationSettings Table
+    private func createNotificationSettingsTable() {
+        let createTableQuery = """
+        CREATE TABLE IF NOT EXISTS NotificationSettings (
+            userId TEXT PRIMARY KEY,
+            allowEmailNotifications INTEGER,
+            notify1hBefore INTEGER,
+            notify6hBefore INTEGER,
+            notify24hBefore INTEGER
+        );
+        """
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
+            if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ NotificationSettings table created successfully.", category: LogCategory.sqliteNotificationsSettings)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute NotificationSettings table creation.", category: LogCategory.sqliteNotificationsSettings)
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ Error preparing NotificationSettings table creation: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteNotificationsSettings)
+        }
+        sqlite3_finalize(statement)
+    }
+
+    
+    // MARK: - Clear Local Notification Settings
+    func clearLocalNotificationSettingsCache() {
+        let deleteQuery = "DELETE FROM NotificationSettings;"
+        var statement: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
+            if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ Local notification settings cleared successfully.", category: LogCategory.sqliteNotificationsSettings)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to clear local notification settings.", category: LogCategory.sqliteNotificationsSettings)
+            }
+        } else {
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for notification settings: \(errorMessage)", category: LogCategory.sqliteNotificationsSettings)
+        }
+
+        sqlite3_finalize(statement)
+    }
+    
+    // MARK: - Save Notification Settings to SQLite
+    func saveNotificationSettingsToSQLite(_ settings: NotificationSettings) {
+        let insertQuery = """
+        INSERT OR REPLACE INTO NotificationSettings
+        (userId, allowEmailNotifications, notify1hBefore, notify6hBefore, notify24hBefore)
+        VALUES (?, ?, ?, ?, ?);
+        """
+        var statement: OpaquePointer?
+        
+        if sqlite3_prepare_v2(db, insertQuery, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_text(statement, 1, settings.userId, -1, nil)
+            sqlite3_bind_int(statement, 2, settings.allowEmailNotifications ? 1 : 0)
+            sqlite3_bind_int(statement, 3, settings.notify1hBefore ? 1 : 0)
+            sqlite3_bind_int(statement, 4, settings.notify6hBefore ? 1 : 0)
+            sqlite3_bind_int(statement, 5, settings.notify24hBefore ? 1 : 0)
+
+            if sqlite3_step(statement) != SQLITE_DONE {
+                LoggerService.shared.log(.error, "❌ Failed to insert/update notification settings.", category: LogCategory.sqliteNotificationsSettings)
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare insert/update for notification settings.", category: LogCategory.sqliteNotificationsSettings)
+        }
+
+        sqlite3_finalize(statement)
+    }
+
+    // MARK: - Load Notification Settings from SQLite
+    func loadNotificationSettingsFromSQLite(userId: String) -> NotificationSettings? {
+        let query = "SELECT * FROM NotificationSettings WHERE userId = ?;"
+        var statement: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_text(statement, 1, userId, -1, nil)
+            
+            if sqlite3_step(statement) == SQLITE_ROW {
+                let allowEmail = sqlite3_column_int(statement, 1) == 1
+                let notify1h = sqlite3_column_int(statement, 2) == 1
+                let notify6h = sqlite3_column_int(statement, 3) == 1
+                let notify24h = sqlite3_column_int(statement, 4) == 1
+
+                sqlite3_finalize(statement)
+
+                return NotificationSettings(
+                    userId: userId,
+                    allowEmailNotifications: allowEmail,
+                    notify1hBefore: notify1h,
+                    notify6hBefore: notify6h,
+                    notify24hBefore: notify24h
+                )
+            }
+        }
+
+        sqlite3_finalize(statement)
+        return nil
+    }
+
+
+
+
+    // MARK: - Creates Notifications Table
+    private func createNotificationsTable() {
+        let createTableQuery = """
+        CREATE TABLE IF NOT EXISTS Notifications (
+            id TEXT PRIMARY KEY,
+            userId TEXT,
+            description TEXT,
+            name TEXT,
+            sentAt DOUBLE,
+            isRead INTEGER,
+            expirationDate DOUBLE,
+            isSynced INTEGER
+        );
+        """
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
+            if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ Notifications table created successfully.", category: LogCategory.sqliteNotifications)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute Notifications table creation.", category: LogCategory.sqliteNotifications)
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ Error preparing Notifications table creation: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteNotifications)
+        }
+        sqlite3_finalize(statement)
+    }
+
+    
+    // MARK: - Clear Local Notifications Cache
+    func clearLocalNotificationsCache() {
+        let deleteQuery = "DELETE FROM Notifications;"
+        var statement: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
+            if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ Local notifications cache cleared successfully.", category: LogCategory.sqliteNotifications)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to clear local notifications cache.", category: LogCategory.sqliteNotifications)
+            }
+        } else {
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for notifications: \(errorMessage)", category: LogCategory.sqliteNotifications)
+        }
+
+        sqlite3_finalize(statement)
+    }
+    
+    // MARK: - Save Notifications To SQLite
+    private func saveNotificationsToSQLite(_ notifications: [NotificationsModel]) {
+        for notification in notifications {
+            let data = notification.toSQLiteData()
+            let insertQuery = """
+            INSERT OR REPLACE INTO Notifications
+            (id, userId, description, name, sentAt, isRead, expirationDate, isSynced)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+            """
+            var statement: OpaquePointer?
+            if sqlite3_prepare_v2(db, insertQuery, -1, &statement, nil) == SQLITE_OK {
+                sqlite3_bind_text(statement, 1, (data["id"] as! String), -1, nil)
+                sqlite3_bind_text(statement, 2, (data["userId"] as! String), -1, nil)
+                sqlite3_bind_text(statement, 3, (data["description"] as! String), -1, nil)
+                sqlite3_bind_text(statement, 4, (data["name"] as! String), -1, nil)
+                sqlite3_bind_double(statement, 5, data["sentAt"] as! Double)
+                sqlite3_bind_int(statement, 6, Int32(data["isRead"] as! Int))
+                sqlite3_bind_double(statement, 7, data["expirationDate"] as! Double)
+                sqlite3_bind_int(statement, 8, Int32(data["isSynced"] as! Int))
+
+                if sqlite3_step(statement) != SQLITE_DONE {
+                    LoggerService.shared.log(.error, "❌ Failed to insert notification into SQLite.", category: LogCategory.sqliteNotifications)
+                }
+            }
+            sqlite3_finalize(statement)
+        }
+    }
+
+    
+    // MARK: - Delete Notifications From SQLite
+    func deleteNotificationFromSQLite(id: String) {
+        let deleteQuery = "DELETE FROM Notifications WHERE id = ?;"
+        var statement: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_text(statement, 1, id, -1, nil)
+            if sqlite3_step(statement) != SQLITE_DONE {
+                LoggerService.shared.log(.error, "❌ Failed to delete notification \(id) from SQLite.", category: LogCategory.sqliteNotifications)
+            }
+        }
+        sqlite3_finalize(statement)
+    }
+    
+    //MARK: - Delete Expired Notifications
+    func deleteExpiredNotifications() {
+        let now = Date().timeIntervalSince1970
+        let deleteQuery = "DELETE FROM Notifications WHERE expirationDate < ?;"
+        var statement: OpaquePointer?
+
+        if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_double(statement, 1, now)
+            if sqlite3_step(statement) != SQLITE_DONE {
+                LoggerService.shared.log(.error, "❌ Failed to delete expired notifications.", category: LogCategory.sqliteNotifications)
+            }
+        }
+        sqlite3_finalize(statement)
+    }
+
+
+    // MARK: - Update Read Status in SQLite
+    private func updateReadStatusInSQLite(notificationId: String) {
+        let query = "UPDATE Notifications SET isRead = 1 WHERE id = ?;"
+        var statement: OpaquePointer?
+        if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
+            sqlite3_bind_text(statement, 1, notificationId, -1, nil)
+            if sqlite3_step(statement) != SQLITE_DONE {
+                LoggerService.shared.log(.error, "❌ Failed to update read status in SQLite.", category: LogCategory.sqliteNotifications)
+            }
+        }
+        sqlite3_finalize(statement)
+    }
+
+    
+    //MARK: - Load Notifications From SQLite
+    func loadNotificationsFromSQLite() -> [NotificationsModel] {
+        let query = "SELECT * FROM Notifications;"
+        var statement: OpaquePointer?
+        var loaded: [NotificationsModel] = []
+
+        if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
+            while sqlite3_step(statement) == SQLITE_ROW {
+                if let notification = NotificationsModel.fromSQLiteData(statement: statement!) {
+                    loaded.append(notification)
+                }
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare notification SELECT query.", category: LogCategory.sqliteNotifications)
+        }
+
+        sqlite3_finalize(statement)
+        return loaded
+    }
+    
     //MARK: - Penpal Component Specific -
     // TODO: - Adjust the PenpalService to fit with SQL Lite And Needs more work overall
     
     
 
     // MARK: - Creates a Matches Table
+    // MARK: - Creates a Penpals table (aligned with PenpalsModel)
     private func createPenpalsTable() {
         let createTableQuery = """
         CREATE TABLE IF NOT EXISTS Penpals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userId TEXT,
-            penpalId TEXT,
+            rowId INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId TEXT NOT NULL,
+            penpalId TEXT NOT NULL,
             firstName TEXT,
             lastName TEXT,
             proficiency TEXT,
             hobbies TEXT,
-            goals TEXT,
+            goal TEXT,
             region TEXT,
             matchScore INTEGER,
-            status TEXT,
-            timestamp DOUBLE,
-            isSynced BOOLEAN
+            status TEXT NOT NULL,
+            profileImageURL TEXT,
+            timestamp REAL NOT NULL,
+            isSynced INTEGER NOT NULL DEFAULT 0
         );
+        -- Ensure the UPSERTs work:
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_penpals_user_penpal
+        ON Penpals(userId, penpalId);
         """
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Penpals table created successfully.")
+                LoggerService.shared.log(.info, "✅ Penpals table created successfully.", category: LogCategory.sqlitePenpal)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute Penpals table creation.", category: LogCategory.sqlitePenpal)
             }
         } else {
-            print("Error creating Penpals table.")
+            LoggerService.shared.log(.error, "❌ Error preparing Penpals table creation: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
     }
-    // MARK: - This will pull All Penpals that are accepted
+
+    // MARK: - Pull all approved Penpals for a user
     func getAllPenpals(for userId: String) -> [PenpalsModel] {
-        let query = "SELECT * FROM Penpals WHERE userId = ? AND status = 'accepted'"
+        let query = "SELECT * FROM Penpals WHERE userId = ? AND status = 'approved'"
         var statement: OpaquePointer?
         var penpals: [PenpalsModel] = []
 
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (userId as NSString).utf8String, -1, nil)
 
+            // Column order per createPenpalsTable():
+            // 0 rowId | 1 id | 2 userId | 3 penpalId | 4 firstName | 5 lastName
+            // 6 proficiency | 7 hobbies | 8 goal | 9 region | 10 matchScore
+            // 11 status | 12 profileImageURL | 13 timestamp | 14 isSynced
+
+            let decoder = JSONDecoder()
+
             while sqlite3_step(statement) == SQLITE_ROW {
-                let penpalId = sqlite3_column_text(statement, 1).map { String(cString: $0) } ?? ""
-                let firstName = sqlite3_column_text(statement, 3).map { String(cString: $0) } ?? ""
-                let lastName = sqlite3_column_text(statement, 4).map { String(cString: $0) } ?? ""
-                let proficiency = sqlite3_column_text(statement, 5).map { String(cString: $0) } ?? ""
-                let hobbiesString = sqlite3_column_text(statement, 6).map { String(cString: $0) } ?? ""
-                let hobbies = hobbiesString.components(separatedBy: ",")
-                let goals = sqlite3_column_text(statement, 7).map { String(cString: $0) } ?? ""
-                let region = sqlite3_column_text(statement, 8).map { String(cString: $0) } ?? ""
-                let matchScore = Int(sqlite3_column_int(statement, 9))
-                let status = sqlite3_column_text(statement, 10).map { String(cString: $0) } ?? "pending"
-                let isSynced = sqlite3_column_int(statement, 11) == 1
+                let _rowId = sqlite3_column_int64(statement, 0)
+                let id         = sqlite3_column_text(statement, 1).map { String(cString: $0) } ?? ""
+                let userIdDb   = sqlite3_column_text(statement, 2).map { String(cString: $0) } ?? userId
+                let penpalId   = sqlite3_column_text(statement, 3).map { String(cString: $0) } ?? ""
+                let firstName  = sqlite3_column_text(statement, 4).map { String(cString: $0) } ?? ""
+                let lastName   = sqlite3_column_text(statement, 5).map { String(cString: $0) } ?? ""
+
+                // proficiency JSON -> LanguageProficiency
+                let proficiencyJSON = sqlite3_column_text(statement, 6).map { String(cString: $0) } ?? ""
+                let proficiencyData = proficiencyJSON.data(using: .utf8) ?? Data()
+                let proficiency = (try? decoder.decode(LanguageProficiency.self, from: proficiencyData)) ?? .beginner
+
+                // hobbies: comma-separated IDs -> [Hobbies]
+                let hobbiesCSV = sqlite3_column_text(statement, 7).map { String(cString: $0) } ?? ""
+                let hobbyIds = hobbiesCSV.split(separator: ",").map { String($0) }
+                let hobbies: [Hobbies] = hobbyIds.compactMap { id in
+                    Hobbies.predefinedHobbies.first(where: { $0.id == id })
+                }
+
+                // goal JSON -> Goals?
+                let goalJSON = sqlite3_column_text(statement, 8).map { String(cString: $0) } ?? ""
+                let goalData = goalJSON.data(using: .utf8) ?? Data()
+                let goal = (goalJSON.isEmpty ? nil : (try? decoder.decode(Goals.self, from: goalData)))
+
+                let region     = sqlite3_column_text(statement, 9).map { String(cString: $0) } ?? ""
+                let matchScore = sqlite3_column_type(statement, 10) == SQLITE_NULL ? nil : Int(sqlite3_column_int(statement, 10))
+                let statusRaw  = sqlite3_column_text(statement, 11).map { String(cString: $0) } ?? "pending"
+                let status     = PenpalStatus(rawValue: statusRaw) ?? .pending
+                let profileURL = sqlite3_column_text(statement, 12).map { String(cString: $0) } ?? ""
+                let isSynced   = sqlite3_column_int(statement, 14) == 1
 
                 let penpal = PenpalsModel(
-                    userId: userId,
+                    userId: userIdDb,
                     penpalId: penpalId,
                     firstName: firstName,
                     lastName: lastName,
                     proficiency: proficiency,
                     hobbies: hobbies,
-                    goals: goals,
+                    goal: goal,
                     region: region,
                     matchScore: matchScore,
-                    status: MatchStatus(rawValue: status) ?? .pending,
+                    status: status,
+                    profileImageURL: profileURL,
                     isSynced: isSynced
                 )
 
                 penpals.append(penpal)
             }
+
+            LoggerService.shared.log(.info, "Fetched \(penpals.count) approved penpals for userId: \(userId)", category: LogCategory.sqlitePenpal)
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare getAllPenpals query for userId: \(userId). Error: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
         return penpals
     }
+
     
     // MARK: - Count Cached Penpals
     func countCachedPenpals(for userId: String) -> Int {
@@ -126,7 +412,21 @@ class SQLiteManager {
 
             if sqlite3_step(statement) == SQLITE_ROW {
                 count = Int(sqlite3_column_int(statement, 0))
+                LoggerService.shared.log(.info,"Cached penpal count for userId \(userId): \(count)",category: LogCategory.sqlitePenpal)
+            } else {
+                LoggerService.shared.log(
+                    .warning,
+                    "sqlite3_step failed while counting penpals for userId \(userId)",
+                    category: LogCategory.sqlitePenpal
+                )
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(
+                .error,
+                "Failed to prepare COUNT query for userId \(userId). Error: \(errorMsg)",
+                category: LogCategory.sqlitePenpal
+            )
         }
         sqlite3_finalize(statement)
         return count
@@ -146,10 +446,22 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (userId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Penpal synced successfully.")
+                LoggerService.shared.log(
+                    .info,
+                    "Successfully synced penpalId \(penpalId) for userId \(userId)",
+                    category: LogCategory.sqlitePenpal
+                )
             } else {
-                print("Failed to sync penpal.")
+                LoggerService.shared.log(
+                    .warning, "Failed to sync penpalId \(penpalId) for userId \(userId). sqlite3_step did not complete as expected.",category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(
+                .error,
+                "Failed to prepare sync query for penpalId \(penpalId) and userId \(userId). Error: \(errorMsg)",
+                category: LogCategory.sqlitePenpal
+            )
         }
         sqlite3_finalize(statement)
     }
@@ -164,9 +476,15 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (userId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "Declined friend request from \(penpalId) for user \(userId)", category: LogCategory.sqlitePenpal)
                 sqlite3_finalize(statement)
                 return true
+            } else {
+                LoggerService.shared.log(.warning, "Failed to decline friend request: step failed for penpalId \(penpalId), userId \(userId)", category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare decline friend request query for penpalId \(penpalId), userId \(userId). Error: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
         return false
@@ -174,7 +492,7 @@ class SQLiteManager {
 
     // MARK: - Accept Friend Request
     func acceptFriendRequest(from penpalId: String, for userId: String) -> Bool {
-        let query = "UPDATE Penpals SET status = 'accepted' WHERE penpalId = ? AND userId = ?"
+        let query = "UPDATE Penpals SET status = 'approved' WHERE penpalId = ? AND userId = ?"
         var statement: OpaquePointer?
 
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
@@ -182,9 +500,15 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (userId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "Accepted friend request from \(penpalId) for user \(userId)", category: LogCategory.sqlitePenpal)
                 sqlite3_finalize(statement)
                 return true
+            }  else {
+                LoggerService.shared.log(.warning, "Failed to accept friend request: step failed for penpalId \(penpalId), userId \(userId)", category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare accept friend request query for penpalId \(penpalId), userId \(userId). Error: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
         return false
@@ -209,8 +533,13 @@ class SQLiteManager {
             sqlite3_bind_int(statement, 3, Int32(limit))
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Enforced penpal limit successfully.")
+                LoggerService.shared.log(.info, "Enforced penpal limit (\(limit)) for user \(userId)", category: LogCategory.sqlitePenpal)
+            } else {
+                LoggerService.shared.log(.warning, "Failed to enforce penpal limit for user \(userId)", category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+    LoggerService.shared.log(.error, "Failed to prepare enforcePenpalLimit query for user \(userId). Error: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
     }
@@ -227,9 +556,15 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (userId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "Deleted penpal \(penpalId) for user \(userId)", category: LogCategory.sqlitePenpal)
                 sqlite3_finalize(statement)
                 return true
+            } else {
+                LoggerService.shared.log(.warning, "Failed to delete penpal \(penpalId) for user \(userId)", category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+    LoggerService.shared.log(.error, "Failed to prepare deletePenpal statement. Error: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
         return false
@@ -239,50 +574,79 @@ class SQLiteManager {
     
     // MARK: -  Cache matches to the SQLite database
     func cachePenpals(_ matches: [PenpalsModel]) {
-        // TODO: - Prevent duplicate entries by using `INSERT OR REPLACE`
-            // OR clearing existing cache before inserting.
-            // Recommended: Add `PRIMARY KEY (userId, penpalId)` to the table
-            // and change the insert query to:
-            // let insertQuery = "INSERT OR REPLACE INTO Penpals (...) VALUES (...);"
         let insertQuery = """
-        INSERT INTO Penpals (userId, penpalId, firstName, lastName, proficiency, hobbies, goals, region, matchScore, status, timestamp, isSynced)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT INTO Penpals (
+            userId, penpalId, firstName, lastName, proficiency, hobbies, goal, region,
+            matchScore, status, profileImageURL, timestamp, isSynced
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(userId, penpalId) DO UPDATE SET
+            firstName = excluded.firstName,
+            lastName = excluded.lastName,
+            proficiency = excluded.proficiency,
+            hobbies = excluded.hobbies,
+            goal = excluded.goal,
+            region = excluded.region,
+            matchScore = excluded.matchScore,
+            status = excluded.status,
+            profileImageURL = excluded.profileImageURL,
+            timestamp = excluded.timestamp,
+            isSynced = excluded.isSynced;
         """
 
         var statement: OpaquePointer?
-        
+
         for match in matches {
             if sqlite3_prepare_v2(db, insertQuery, -1, &statement, nil) == SQLITE_OK {
+                
+                // Encode proficiency as JSON string
+                let proficiencyData = try? JSONEncoder().encode(match.proficiency)
+                let proficiencyString = String(data: proficiencyData ?? Data(), encoding: .utf8) ?? ""
+                
+                // Encode hobbies as comma-separated IDs
+                let hobbiesString = match.hobbies.map { $0.id }.joined(separator: ",")
+                
+                // Encode goal as JSON string (optional)
+                let goalData = try? JSONEncoder().encode(match.goal)
+                let goalString = String(data: goalData ?? Data(), encoding: .utf8) ?? ""
+
                 sqlite3_bind_text(statement, 1, (match.userId as NSString).utf8String, -1, nil)
                 sqlite3_bind_text(statement, 2, (match.penpalId as NSString).utf8String, -1, nil)
                 sqlite3_bind_text(statement, 3, (match.firstName as NSString).utf8String, -1, nil)
                 sqlite3_bind_text(statement, 4, (match.lastName as NSString).utf8String, -1, nil)
-                sqlite3_bind_text(statement, 5, (match.proficiency as NSString).utf8String, -1, nil)
-                sqlite3_bind_text(statement, 6, (match.hobbies.joined(separator: ",") as NSString).utf8String, -1, nil)
-                sqlite3_bind_text(statement, 7, (match.goals as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(statement, 5, (proficiencyString as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(statement, 6, (hobbiesString as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(statement, 7, (goalString as NSString).utf8String, -1, nil)
                 sqlite3_bind_text(statement, 8, (match.region as NSString).utf8String, -1, nil)
-                sqlite3_bind_int(statement, 9, Int32(match.matchScore))
+                if let score = match.matchScore {
+                    sqlite3_bind_int(statement, 9, Int32(score))
+                } else {
+                    sqlite3_bind_null(statement, 9)
+                }
                 sqlite3_bind_text(statement, 10, (match.status.rawValue as NSString).utf8String, -1, nil)
-                sqlite3_bind_double(statement, 11, Date().timeIntervalSince1970)
-                sqlite3_bind_int(statement, 12, match.isSynced ? 1 : 0)
-
+                sqlite3_bind_text(statement, 11, (match.profileImageURL as NSString).utf8String, -1, nil)
+                sqlite3_bind_double(statement, 12, Date().timeIntervalSince1970)
+                sqlite3_bind_int(statement, 13, match.isSynced ? 1 : 0)
 
                 if sqlite3_step(statement) == SQLITE_DONE {
-                    print("Penpal cached successfully for \(match.penpalId).")
+                    LoggerService.shared.log(.info, "✅ Penpal cached successfully for \(match.penpalId)", category: LogCategory.sqlitePenpal)
                 } else {
-                    print("Failed to cache match for \(match.penpalId).")
+                    LoggerService.shared.log(.warning, "⚠️ Failed to cache penpal \(match.penpalId)", category: LogCategory.sqlitePenpal)
                 }
+            } else {
+                let errorMsg = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "❌ Failed to prepare insert for penpal \(match.penpalId): \(errorMsg)", category: LogCategory.sqlitePenpal)
             }
             sqlite3_finalize(statement)
         }
     }
+
     
     // MARK: - Send Friend Request
     func sendFriendRequest(to penpalId: String, from userId: String) -> Bool {
         let query = """
-        INSERT INTO Penpals (userId, penpalId, status, isSynced) 
-        VALUES (?, ?, 'pending', 0)
-        ON CONFLICT(userId, penpalId) DO UPDATE SET status = 'pending';
+        INSERT INTO Penpals (userId, penpalId, status, isSynced, timestamp)
+        VALUES (?, ?, 'pending', 0, strftime('%s','now'))
+        ON CONFLICT(userId, penpalId) DO UPDATE SET status='pending', isSynced=0, timestamp=strftime('%s','now');
         """
         var statement: OpaquePointer?
 
@@ -291,16 +655,29 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (penpalId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "Sent friend request from \(userId) to \(penpalId)", category: LogCategory.sqlitePenpal)
                 sqlite3_finalize(statement)
                 return true
-            }
+            } else {
+                let errorMsg = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "Failed to send friend request from \(userId) to \(penpalId): \(errorMsg)", category: LogCategory.sqlitePenpal)
+                }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare friend request insert: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
+        
         sqlite3_finalize(statement)
         return false
     }
 
     // MARK: -  Fetches cached matches for a user from SQLite
     func fetchCachedPenpals(for userId: String) -> [PenpalsModel] {
+        // Column order per createPenpalsTable():
+        // 0 rowId | 1 id | 2 userId | 3 penpalId | 4 firstName | 5 lastName
+        // 6 proficiency(JSON) | 7 hobbies(CSV IDs) | 8 goal(JSON) | 9 region
+        // 10 matchScore | 11 status | 12 profileImageURL | 13 timestamp | 14 isSynced
+
         let query = "SELECT * FROM Penpals WHERE userId = ? ORDER BY matchScore DESC"
         var statement: OpaquePointer?
         var matches: [PenpalsModel] = []
@@ -308,39 +685,72 @@ class SQLiteManager {
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (userId as NSString).utf8String, -1, nil)
 
-            while sqlite3_step(statement) == SQLITE_ROW {
-                let penpalId = String(cString: sqlite3_column_text(statement, 2))
-                let firstName = String(cString: sqlite3_column_text(statement, 3))
-                let lastName = String(cString: sqlite3_column_text(statement, 4))
-                let proficiency = String(cString: sqlite3_column_text(statement, 5))
-                let hobbiesString = String(cString: sqlite3_column_text(statement, 6))
-                let hobbies = hobbiesString.components(separatedBy: ",")
-                let goals = String(cString: sqlite3_column_text(statement, 7))
-                let region = String(cString: sqlite3_column_text(statement, 8))
-                let matchScore = Int(sqlite3_column_int(statement, 9))
-                let status = String(cString: sqlite3_column_text(statement, 10))
-                let isSynced = sqlite3_column_int(statement, 11) == 1
+            let decoder = JSONDecoder()
 
+            while sqlite3_step(statement) == SQLITE_ROW {
+                // Safe string fetch helper
+                func colString(_ idx: Int32) -> String {
+                    guard let cstr = sqlite3_column_text(statement, idx) else { return "" }
+                    return String(cString: cstr)
+                }
+
+                let penpalId = colString(3)
+                let firstName = colString(4)
+                let lastName = colString(5)
+
+                // proficiency JSON -> LanguageProficiency (default to .beginner if decoding fails)
+                let proficiencyJSON = colString(6)
+                let proficiencyData = proficiencyJSON.data(using: .utf8) ?? Data()
+                let proficiency = (try? decoder.decode(LanguageProficiency.self, from: proficiencyData)) ?? .beginner
+
+                // hobbies CSV IDs -> [Hobbies]
+                let hobbiesCSV = colString(7)
+                let hobbyIds = hobbiesCSV.split(separator: ",").map { String($0) }
+                let hobbies: [Hobbies] = hobbyIds.compactMap { id in
+                    Hobbies.predefinedHobbies.first(where: { $0.id == id })
+                }
+
+                // goal JSON -> Goals?
+                let goalJSON = colString(8)
+                let goal: Goals? = {
+                    guard !goalJSON.isEmpty, let data = goalJSON.data(using: .utf8) else { return nil }
+                    return try? decoder.decode(Goals.self, from: data)
+                }()
+
+                let region = colString(9)
+                let matchScore = (sqlite3_column_type(statement, 10) == SQLITE_NULL) ? nil : Int(sqlite3_column_int(statement, 10))
+                let statusRaw = colString(11)
+                let status = PenpalStatus(rawValue: statusRaw) ?? .pending
+                let profileImageURL = colString(12)
+                let isSynced = sqlite3_column_int(statement, 14) == 1
 
                 let match = PenpalsModel(
-                    userId: userId,
+                    userId: userId,                
                     penpalId: penpalId,
                     firstName: firstName,
                     lastName: lastName,
                     proficiency: proficiency,
                     hobbies: hobbies,
-                    goals: goals,
+                    goal: goal,
                     region: region,
                     matchScore: matchScore,
-                    status: MatchStatus(rawValue: status) ?? .pending,
+                    status: status,
+                    profileImageURL: profileImageURL,
                     isSynced: isSynced
                 )
                 matches.append(match)
             }
+
+            LoggerService.shared.log(.info, "Fetched \(matches.count) cached penpals for user \(userId)", category: LogCategory.sqlitePenpal)
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare fetchCachedPenpals query: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
+
         sqlite3_finalize(statement)
         return matches
     }
+
     
     // MARK: - Clears matches older than 7 days
     func clearOldPenpals() {
@@ -352,11 +762,213 @@ class SQLiteManager {
             sqlite3_bind_double(statement, 1, cutoffTime)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Old Penpals cleared successfully.")
+                LoggerService.shared.log(.info, "Old penpals cleared successfully (older than 7 days)", category: LogCategory.sqlitePenpal)
+            } else {
+                LoggerService.shared.log(.warning, "Failed to clear old penpals: step execution failed", category: LogCategory.sqlitePenpal)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare clearOldPenpals query: \(errorMsg)", category: LogCategory.sqlitePenpal)
         }
         sqlite3_finalize(statement)
     }
+    
+    // MARK: - Swipe Specific -
+    //MARK: - Create Swipes Quota Table
+    private func createSwipeQuotaTable() {
+        let sql = """
+        CREATE TABLE IF NOT EXISTS SwipeQuota (
+            userId   TEXT PRIMARY KEY,
+            day      TEXT NOT NULL,            -- "yyyy-MM-dd"
+            used     INTEGER NOT NULL DEFAULT 0,
+            max      INTEGER NOT NULL DEFAULT 40,
+            updatedAt REAL NOT NULL            -- epoch seconds
+        );
+        """
+        var stmt: OpaquePointer?
+        if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
+            if sqlite3_step(stmt) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ SwipeQuota table ready", category: LogCategory.sqliteSwipes)
+            } else {
+                LoggerService.shared.log(.warning, "⚠️ SwipeQuota create step failed", category: LogCategory.sqliteSwipes)
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ SwipeQuota create prepare error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteSwipes)
+        }
+        sqlite3_finalize(stmt)
+    }
+    
+    func fetchSwipeStatusLocal(userId: String, defaultMax: Int) -> (remaining: Int, windowEndsAt: Date) {
+        let dayKey = todayKey()
+        let select = "SELECT day, used, max FROM SwipeQuota WHERE userId = ?"
+        var stmt: OpaquePointer?
+
+        var day = dayKey
+        var used = 0
+        var maxPerDay = defaultMax
+
+        if sqlite3_prepare_v2(db, select, -1, &stmt, nil) == SQLITE_OK {
+            sqlite3_bind_text(stmt, 1, (userId as NSString).utf8String, -1, nil)
+            if sqlite3_step(stmt) == SQLITE_ROW {
+                day       = String(cString: sqlite3_column_text(stmt, 0))
+                used      = Int(sqlite3_column_int(stmt, 1))
+                maxPerDay = Int(sqlite3_column_int(stmt, 2))
+            }
+        } else {
+            LoggerService.shared.log(.error, "fetchSwipeStatusLocal prepare failed: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteSwipes)
+        }
+        sqlite3_finalize(stmt)
+
+        // rollover if needed
+        if day != dayKey {
+            // reset
+            let up = """
+            INSERT INTO SwipeQuota(userId, day, used, max, updatedAt)
+            VALUES (?, ?, 0, ?, strftime('%s','now'))
+            ON CONFLICT(userId) DO UPDATE SET day=excluded.day, used=0, max=excluded.max, updatedAt=excluded.updatedAt;
+            """
+            var upStmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, up, -1, &upStmt, nil) == SQLITE_OK {
+                sqlite3_bind_text(upStmt, 1, (userId as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(upStmt, 2, (dayKey as NSString).utf8String, -1, nil)
+                sqlite3_bind_int(upStmt, 3, Int32(maxPerDay))
+                _ = sqlite3_step(upStmt)
+            }
+            sqlite3_finalize(upStmt)
+            used = 0
+            day = dayKey
+        }
+
+        let remaining = max(0, maxPerDay - used)
+        return (remaining, startOfTomorrow())
+    }
+    
+    func tryConsumeSwipeLocal(userId: String, maxPerDay: Int) -> Result<Int, Error> {
+        let dayKey = todayKey()
+
+        // ensure row exists & rollover if needed
+        let upsert = """
+        INSERT INTO SwipeQuota(userId, day, used, max, updatedAt)
+        VALUES (?, ?, 0, ?, strftime('%s','now'))
+        ON CONFLICT(userId) DO UPDATE SET
+          day = CASE WHEN SwipeQuota.day <> excluded.day THEN excluded.day ELSE SwipeQuota.day END,
+          used = CASE WHEN SwipeQuota.day <> excluded.day THEN 0 ELSE SwipeQuota.used END,
+          max = excluded.max,
+          updatedAt = excluded.updatedAt;
+        """
+
+        let consume = """
+        UPDATE SwipeQuota
+        SET used = used + 1, updatedAt = strftime('%s','now')
+        WHERE userId = ? AND day = ? AND used < max;
+        """
+
+        var up: OpaquePointer?; var c: OpaquePointer?
+        sqlite3_exec(db, "BEGIN IMMEDIATE", nil, nil, nil)
+
+        defer {
+            sqlite3_finalize(up)
+            sqlite3_finalize(c)
+            sqlite3_exec(db, "COMMIT", nil, nil, nil)
+        }
+
+        // upsert/rollover
+        guard sqlite3_prepare_v2(db, upsert, -1, &up, nil) == SQLITE_OK else {
+            let msg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "tryConsumeSwipeLocal upsert prepare failed: \(msg)", category: .sqlitePenpal)
+            return .failure(NSError(domain: "sqlite", code: 1, userInfo: [NSLocalizedDescriptionKey: msg]))
+        }
+        sqlite3_bind_text(up, 1, (userId as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(up, 2, (dayKey as NSString).utf8String, -1, nil)
+        sqlite3_bind_int(up, 3, Int32(maxPerDay))
+        _ = sqlite3_step(up)
+
+        // try consume
+        guard sqlite3_prepare_v2(db, consume, -1, &c, nil) == SQLITE_OK else {
+            let msg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "tryConsumeSwipeLocal consume prepare failed: \(msg)", category: .sqlitePenpal)
+            return .failure(NSError(domain: "sqlite", code: 2, userInfo: [NSLocalizedDescriptionKey: msg]))
+        }
+        sqlite3_bind_text(c, 1, (userId as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(c, 2, (dayKey as NSString).utf8String, -1, nil)
+
+        if sqlite3_step(c) == SQLITE_DONE, sqlite3_changes(db) > 0 {
+            // success → return remaining
+            let (remaining, _) = fetchSwipeStatusLocal(userId: userId, defaultMax: maxPerDay)
+            LoggerService.shared.log(.info, "tryConsumeSwipeLocal: success, remaining=\(remaining)", category: .sqlitePenpal)
+            return .success(remaining)
+        } else {
+            // quota reached → make it match remote (-1 means blocked)
+            LoggerService.shared.log(.info, "tryConsumeSwipeLocal: blocked (quota reached)", category: .sqlitePenpal)
+            return .success(-1)
+        }
+    }
+
+    @discardableResult
+    func setDailySwipeAllowanceLocal(userId: String, newMax: Int) -> Bool {
+        let up = """
+        INSERT INTO SwipeQuota(userId, day, used, max, updatedAt)
+        VALUES (?, ?, 0, ?, strftime('%s','now'))
+        ON CONFLICT(userId) DO UPDATE SET max = excluded.max, updatedAt = excluded.updatedAt;
+        """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, up, -1, &stmt, nil) == SQLITE_OK else {
+            LoggerService.shared.log(.error, "setDailySwipeAllowanceLocal prepare failed", category: .sqlitePenpal)
+            return false
+        }
+        sqlite3_bind_text(stmt, 1, (userId as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 2, (todayKey() as NSString).utf8String, -1, nil)
+        sqlite3_bind_int(stmt, 3, Int32(max(0, newMax)))
+        let ok = sqlite3_step(stmt) == SQLITE_DONE
+        sqlite3_finalize(stmt)
+        return ok
+    }
+
+    @discardableResult
+    func grantBonusSwipesLocal(userId: String, amount: Int, maxPerDay: Int) -> Bool {
+        guard amount > 0 else { return false }
+        let dayKey = todayKey()
+        let sql = """
+        UPDATE SwipeQuota
+        SET used = MAX(0, used - ?), updatedAt = strftime('%s','now')
+        WHERE userId = ? AND day = ?;
+        """
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            LoggerService.shared.log(.error, "grantBonusSwipesLocal prepare failed", category: .sqlitePenpal)
+            return false
+        }
+        sqlite3_bind_int(stmt, 1, Int32(amount))
+        sqlite3_bind_text(stmt, 2, (userId as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 3, (dayKey as NSString).utf8String, -1, nil)
+        let ok = sqlite3_step(stmt) == SQLITE_DONE
+        sqlite3_finalize(stmt)
+        return ok
+    }
+    
+    func upsertSwipeStatusLocal(userId: String, remaining: Int, maxPerDay: Int) {
+        let dayKey = todayKey()
+        let used = max(0, maxPerDay - remaining)
+        let sql = """
+        INSERT INTO SwipeQuota (userId, day, used, max, updatedAt)
+        VALUES (?, ?, ?, ?, strftime('%s','now'))
+        ON CONFLICT(userId) DO UPDATE SET
+          day = excluded.day,
+          used = excluded.used,
+          max = excluded.max,
+          updatedAt = excluded.updatedAt;
+        """
+        var stmt: OpaquePointer?
+        if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
+            sqlite3_bind_text(stmt, 1, (userId as NSString).utf8String, -1, nil)
+            sqlite3_bind_text(stmt, 2, (dayKey as NSString).utf8String, -1, nil)
+            sqlite3_bind_int(stmt, 3, Int32(used))
+            sqlite3_bind_int(stmt, 4, Int32(maxPerDay))
+            _ = sqlite3_step(stmt)
+        }
+        sqlite3_finalize(stmt)
+    }
+
     
     // MARK: - Conversation Specific -
     
@@ -375,12 +987,13 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Conversations table created successfully.")
+                LoggerService.shared.log(.info, "Conversations table created successfully.", category: LogCategory.sqliteConversation)
             } else {
-                print("Failed to create Conversations table.")
+                LoggerService.shared.log(.warning, "Failed to create Conversations table: step execution failed", category: LogCategory.sqliteConversation)
             }
-        } else {
-            print("Error preparing Conversations table creation statement.")
+        }else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Error preparing Conversations table creation statement: \(errorMsg)", category: LogCategory.sqliteConversation)
         }
         sqlite3_finalize(statement)
     }
@@ -394,10 +1007,13 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 1, (conversationId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Conversation deleted locally: \(conversationId)")
+                LoggerService.shared.log(.info, "Conversation deleted locally: \(conversationId)", category: LogCategory.sqliteConversation)
             } else {
-                print("Failed to delete conversation locally.")
+                LoggerService.shared.log(.warning, "Failed to delete conversation locally: \(conversationId)", category: LogCategory.sqliteConversation)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare delete statement for conversation \(conversationId): \(errorMsg)", category: LogCategory.sqliteConversation)
         }
         sqlite3_finalize(statement)
     }
@@ -419,7 +1035,7 @@ class SQLiteManager {
         // Convert participants array to JSON string
         guard let participantsData = try? JSONEncoder().encode(participants),
               let participantsJson = String(data: participantsData, encoding: .utf8) else {
-            print("Failed to encode participants array.")
+            LoggerService.shared.log(.error, "Failed to encode participants array.", category: LogCategory.sqliteConversation)
             return
         }
 
@@ -437,12 +1053,13 @@ class SQLiteManager {
             sqlite3_bind_int(statement, 5, isSynced ? 1 : 0)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Successfully inserted conversation: \(conversationId)")
+                LoggerService.shared.log(.info, "Inserted/updated conversation: \(conversationId)", category: LogCategory.sqliteConversation)
             } else {
-                print("Failed to insert conversation: \(conversationId)")
+                LoggerService.shared.log(.warning, "Failed to insert/update conversation: \(conversationId)", category: LogCategory.sqliteConversation)
             }
         } else {
-            print("Error preparing insert statement for conversation.")
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Error preparing insert for conversation \(conversationId): \(errorMsg)", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -470,6 +1087,8 @@ class SQLiteManager {
                     sqlite3_bind_text(statement, 2, (participantsJSON as NSString).utf8String, -1, nil)
                 } else {
                     sqlite3_bind_null(statement, 2)
+                    LoggerService.shared.log(.warning, "Failed to encode participants for conversation: \(convo.id)", category: LogCategory.sqliteConversation)
+
                 }
 
                 // Bind lastMessage
@@ -487,12 +1106,13 @@ class SQLiteManager {
 
                 // Execute and check result
                 if sqlite3_step(statement) == SQLITE_DONE {
-                    print("Conversation cached: \(convo.id)")
+                    LoggerService.shared.log(.info, "Cached conversation: \(convo.id)", category: LogCategory.sqliteConversation)
                 } else {
-                    print("Failed to cache conversation: \(convo.id)")
+                    LoggerService.shared.log(.error, "Failed to cache conversation: \(convo.id)", category: LogCategory.sqliteConversation)
                 }
             } else {
-                print("Error preparing cache insert statement for conversation: \(convo.id)")
+                let errorMsg = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "Error preparing cache insert statement for conversation \(convo.id): \(errorMsg)", category: LogCategory.sqliteConversation)
             }
             sqlite3_finalize(statement)
         }
@@ -511,10 +1131,15 @@ class SQLiteManager {
                     if convo.participants.contains(userId) {
                         conversations.append(convo)
                     }
+                } else {
+                    LoggerService.shared.log(.warning, "Skipped row in Conversations due to parsing failure", category: LogCategory.sqliteConversation)
                 }
             }
+            LoggerService.shared.log(.info, "Fetched \(conversations.count) conversations for user \(userId)", category: LogCategory.sqliteConversation)
+
         } else {
-            print("Error fetching conversations from database.")
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare fetchConversations query: \(errorMsg)", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -539,10 +1164,15 @@ class SQLiteManager {
             while sqlite3_step(statement) == SQLITE_ROW {
                 if let message = fromSQLiteData(statement: statement) {
                     messages.append(message)
+                } else {
+                    LoggerService.shared.log(.warning, "Failed to decode message row for conversationId: \(conversationId)", category: LogCategory.sqliteMessages)
                 }
             }
+            LoggerService.shared.log(.info, "Fetched \(messages.count) messages for conversation \(conversationId)", category: LogCategory.sqliteMessages)
+
         } else {
-            print("Error fetching conversation messages.")
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Failed to prepare fetchMessagesForConversation statement: \(errorMsg)", category: LogCategory.sqliteMessages)
         }
         
         sqlite3_finalize(statement)
@@ -565,10 +1195,13 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 3, (conversationId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Successfully updated local last message for conversation \(conversationId)")
+                LoggerService.shared.log(.info, "Successfully updated local last message for conversation \(conversationId)", category: LogCategory.sqliteConversation)
             } else {
-                print("Failed to update last message locally")
+                LoggerService.shared.log(.error, "Failed to update last message locally for conversation \(conversationId)", category: LogCategory.sqliteConversation)
             }
+        } else {
+            let errorMsg = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "Error preparing last message update for \(conversationId): \(errorMsg)", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -586,12 +1219,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local cache cleared successfully.")
+                LoggerService.shared.log(.info, "Local conversation cache cleared successfully.", category: LogCategory.sqliteConversation)
             } else {
-                print("Failed to clear local cache.")
+                LoggerService.shared.log(.error, "Failed to clear local conversation cache.", category: LogCategory.sqliteConversation)
             }
         } else {
-            print("Failed to prepare delete statement for clearing local cache.")
+            LoggerService.shared.log(.error, "Failed to prepare statement for clearing local conversation cache.", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -617,8 +1250,10 @@ class SQLiteManager {
                     results.append(convo)
                 }
             }
+            LoggerService.shared.log(.info, "Search completed with \(results.count) result(s) for query: '\(query)'", category: LogCategory.sqliteConversation)
+
         } else {
-            print("Search query failed.")
+            LoggerService.shared.log(.error, "Search query preparation failed for Conversations.", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -638,6 +1273,10 @@ class SQLiteManager {
                     unsynced.append(convo)
                 }
             }
+            LoggerService.shared.log(.info, "Fetched \(unsynced.count) unsynced conversations from SQLite.", category: LogCategory.sqliteConversation)
+
+        } else {
+            LoggerService.shared.log(.error, "Failed to prepare statement for fetching unsynced conversations.", category: LogCategory.sqliteConversation)
         }
 
         sqlite3_finalize(statement)
@@ -666,10 +1305,12 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Messages table created successfully.")
+                LoggerService.shared.log(.info, "Messages table created successfully.", category: LogCategory.sqliteMessages)
+            } else {
+                LoggerService.shared.log(.error, "Failed to create Messages table.", category: LogCategory.sqliteMessages)
             }
         } else {
-            print("Error creating Messages table.")
+            LoggerService.shared.log(.error, "Error preparing Messages table creation statement.", category: LogCategory.sqliteMessages)
         }
         sqlite3_finalize(statement)
     }
@@ -696,10 +1337,12 @@ class SQLiteManager {
                 sqlite3_bind_text(statement, 8, (message.status.rawValue as NSString).utf8String, -1, nil)
 
                 if sqlite3_step(statement) == SQLITE_DONE {
-                    print("Message cached successfully: \(message.text)")
+                    LoggerService.shared.log(.info, "Message cached: \(message.id)", category: LogCategory.sqliteMessages)
                 } else {
-                    print("Failed to cache message: \(message.text)")
+                    LoggerService.shared.log(.error, "Failed to cache message: \(message.id)", category: LogCategory.sqliteMessages)
                 }
+            }  else {
+                LoggerService.shared.log(.error, "Failed to prepare message insert statement for: \(message.id)", category: LogCategory.sqliteMessages)
             }
             sqlite3_finalize(statement)
         }
@@ -717,12 +1360,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local message cache cleared successfully.")
+                LoggerService.shared.log(.info, "Local message cache cleared successfully.", category: LogCategory.sqliteMessages)
             } else {
-                print("Failed to clear local message cache.")
+                LoggerService.shared.log(.error, "Failed to clear local message cache.", category: LogCategory.sqliteMessages)
             }
         } else {
-            print("Failed to prepare delete statement for message cache.")
+            LoggerService.shared.log(.error, "Failed to prepare delete statement for message cache.", category: LogCategory.sqliteMessages)
         }
 
         sqlite3_finalize(statement)
@@ -742,7 +1385,7 @@ class SQLiteManager {
                 }
             }
         } else {
-            print("Error fetching messages.")
+            LoggerService.shared.log(.error, "Error fetching messages.", category: LogCategory.sqliteMessages)
         }
         
         sqlite3_finalize(statement)
@@ -764,10 +1407,10 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (messageId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) != SQLITE_DONE {
-                print("Failed to update message status for ID: \(messageId)")
+                LoggerService.shared.log(.error, "Failed to update message status for ID: \(messageId)", category: LogCategory.sqliteMessages)
             }
         } else {
-            print("Failed to prepare update statement for message status.")
+            LoggerService.shared.log(.error, "Failed to prepare update statement for message status.", category: LogCategory.sqliteMessages)
         }
 
         sqlite3_finalize(statement)
@@ -791,7 +1434,7 @@ class SQLiteManager {
                 }
             }
         } else {
-            print("Failed to prepare fetchFailedMessages query.")
+            LoggerService.shared.log(.error, "Failed to prepare fetchFailedMessages query.", category: LogCategory.sqliteMessages)
         }
 
         sqlite3_finalize(statement)
@@ -806,11 +1449,11 @@ class SQLiteManager {
         if sqlite3_prepare_v2(db, query, -1, &statement, nil) == SQLITE_OK {
             while sqlite3_step(statement) == SQLITE_ROW {
                 if let message = parseMessageRow(statement: statement) {
-                    print("Unread message: \(message.text)")
+                    LoggerService.shared.log(.info, "Unread message: \(message.text)", category: LogCategory.sqliteMessages)
                 }
             }
         } else {
-            print("Failed to prepare fetchUnreadMessages query.")
+            LoggerService.shared.log(.error, "Failed to prepare fetchUnreadMessages query.", category: LogCategory.sqliteMessages)
         }
 
         sqlite3_finalize(statement)
@@ -825,10 +1468,10 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 1, (messageId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) != SQLITE_DONE {
-                print("Failed to mark message as read: \(messageId)")
+                LoggerService.shared.log(.error, "Failed to mark message as read: \(messageId)", category: LogCategory.sqliteMessages)
             }
         } else {
-            print("Failed to prepare update statement for marking message as read.")
+            LoggerService.shared.log(.error, "Failed to prepare update statement for marking message as read.", category: LogCategory.sqliteMessages)
         }
 
         sqlite3_finalize(statement)
@@ -836,16 +1479,20 @@ class SQLiteManager {
     
     // Helper to parse a row into a MessagesModel
     private func parseMessageRow(statement: OpaquePointer?) -> MessagesModel? {
-        guard let statement = statement else { return nil }
-
+        guard let statement = statement else {
+            LoggerService.shared.log(.error, "SQLite statement pointer is nil in parseMessageRow", category: LogCategory.sqliteMessages)
+            return nil
+            }
         guard
             let idCStr = sqlite3_column_text(statement, 0),
             let senderIdCStr = sqlite3_column_text(statement, 1),
             let textCStr = sqlite3_column_text(statement, 2),
             let typeCStr = sqlite3_column_text(statement, 5),
             let statusCStr = sqlite3_column_text(statement, 7)
-        else { return nil }
-
+        else {
+            LoggerService.shared.log(.warning, "Failed to parse some columns in parseMessageRow", category: LogCategory.sqliteMessages)
+            return nil
+        }
         let id = String(cString: idCStr)
         let senderId = String(cString: senderIdCStr)
         let text = String(cString: textCStr)
@@ -886,12 +1533,12 @@ class SQLiteManager {
         
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("MyCalendar table created successfully.")
+                LoggerService.shared.log(.info, "MyCalendar table created successfully.", category: LogCategory.sqliteCalendar)
             } else {
-                print("Failed to create MyCalendar table.")
+                LoggerService.shared.log(.error, "Failed to create MyCalendar table.", category: LogCategory.sqliteCalendar)
             }
         } else {
-            print("Error preparing CREATE TABLE statement.")
+            LoggerService.shared.log(.error, "Error preparing CREATE TABLE statement for MyCalendar.", category: LogCategory.sqliteCalendar)
         }
         
         sqlite3_finalize(statement)
@@ -909,12 +1556,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local calendar cache cleared successfully.")
+                LoggerService.shared.log(.info, "Local calendar cache cleared successfully.", category: LogCategory.sqliteCalendar)
             } else {
-                print("Failed to clear local calendar cache.")
+                LoggerService.shared.log(.error, "Failed to clear local calendar cache.", category: LogCategory.sqliteCalendar)
             }
         } else {
-            print("Failed to prepare delete statement for calendar cache.")
+            LoggerService.shared.log(.error, "Failed to prepare delete statement for calendar cache.", category: LogCategory.sqliteCalendar)
         }
 
         sqlite3_finalize(statement)
@@ -935,10 +1582,15 @@ class SQLiteManager {
                 let meetingIdsString = sqlite3_column_text(statement, 2).map { String(cString: $0) } ?? ""
                 
                 let meetingIds = meetingIdsString.isEmpty ? [] : meetingIdsString.components(separatedBy: ",")
+                LoggerService.shared.log(.info, "Fetched calendar for user \(userId)", category: LogCategory.sqliteCalendar)
                 sqlite3_finalize(statement)
                 
                 return MyCalendar(id: id, userId: userId, meetingIds: meetingIds)
+            } else {
+                LoggerService.shared.log(.warning, "No calendar found for user \(userId)", category: LogCategory.sqliteCalendar)
             }
+        } else {
+            LoggerService.shared.log(.error, "Failed to prepare fetch statement for user \(userId)", category: LogCategory.sqliteCalendar)
         }
         
         sqlite3_finalize(statement)
@@ -957,10 +1609,12 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (calendar.id as NSString).utf8String, -1, nil)
             
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("MyCalendar updated successfully.")
+                LoggerService.shared.log(.info, "MyCalendar updated successfully for id: \(calendar.id)", category: LogCategory.sqliteCalendar)
             } else {
-                print("Failed to update MyCalendar.")
+                LoggerService.shared.log(.error, "Failed to update MyCalendar for id: \(calendar.id)", category: LogCategory.sqliteCalendar)
             }
+        } else {
+            LoggerService.shared.log(.error, "Failed to prepare update statement for MyCalendar id: \(calendar.id)", category: LogCategory.sqliteCalendar)
         }
         
         sqlite3_finalize(statement)
@@ -980,10 +1634,12 @@ class SQLiteManager {
                 sqlite3_bind_text(statement, 3, (meetingIdsString as NSString).utf8String, -1, nil)
                 
                 if sqlite3_step(statement) == SQLITE_DONE {
-                    print("MyCalendar cached successfully.")
+                    LoggerService.shared.log(.info, "MyCalendar cached successfully for id: \(calendar.id)", category: LogCategory.sqliteCalendar)
                 } else {
-                    print("Failed to cache MyCalendar.")
+                    LoggerService.shared.log(.error, "Failed to cache MyCalendar for id: \(calendar.id)", category: LogCategory.sqliteCalendar)
                 }
+            } else {
+                LoggerService.shared.log(.error, "Failed to prepare insert statement for MyCalendar id: \(calendar.id)", category: LogCategory.sqliteCalendar)
             }
             
             sqlite3_finalize(statement)
@@ -1018,12 +1674,12 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("✅ Profiles table created successfully.")
+                LoggerService.shared.log(.info, "Profiles table created successfully.", category: LogCategory.sqliteProfile)
             } else {
-                print("❌ Failed to execute table creation step.")
+                LoggerService.shared.log(.error, "Failed to execute Profiles table creation step.", category: LogCategory.sqliteProfile)
             }
         } else {
-            print("❌ Failed to prepare create table statement.")
+            LoggerService.shared.log(.error, "Failed to prepare Profiles table creation statement.", category: LogCategory.sqliteProfile)
         }
         sqlite3_finalize(statement)
     }
@@ -1040,12 +1696,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local profiles cache cleared successfully.")
+                LoggerService.shared.log(.info, "Local profiles cache cleared successfully.", category: LogCategory.sqliteProfile)
             } else {
-                print("Failed to clear local profiles cache.")
+                LoggerService.shared.log(.error, "Failed to clear local profiles cache.", category: LogCategory.sqliteProfile)
             }
         } else {
-            print("Failed to prepare delete statement for profiles cache.")
+            LoggerService.shared.log(.error, "Failed to prepare delete statement for profiles cache.", category: LogCategory.sqliteProfile)
         }
 
         sqlite3_finalize(statement)
@@ -1084,12 +1740,12 @@ class SQLiteManager {
             sqlite3_bind_int(statement, 15, data["isSynced"] as! Bool ? 1 : 0)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("✅ Profile inserted successfully for \(profile.id).")
+                LoggerService.shared.log(.info, "✅ Profile inserted successfully for \(profile.id)", category: LogCategory.sqliteProfile)
             } else {
-                print("❌ Failed to insert profile. Error: \(String(cString: sqlite3_errmsg(db)))")
+                LoggerService.shared.log(.error, "❌ Failed to insert profile. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
             }
         } else {
-            print("❌ Failed to prepare insert statement. Error: \(String(cString: sqlite3_errmsg(db)))")
+            LoggerService.shared.log(.error, "❌ Failed to prepare insert statement. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
         }
 
         sqlite3_finalize(statement)
@@ -1163,9 +1819,11 @@ class SQLiteManager {
                     updatedAt: updatedAt,
                     isSynced: isSynced
                 )
+                LoggerService.shared.log(.info, "✅ Fetched profile for \(userId)", category: LogCategory.sqliteProfile)
+
             }
         } else {
-            print("❌ Failed to prepare fetch statement. Error: \(String(cString: sqlite3_errmsg(db)))")
+            LoggerService.shared.log(.error, "❌ Failed to prepare fetch statement. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
         }
 
         sqlite3_finalize(statement)
@@ -1212,12 +1870,12 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 14, (data["id"] as! NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("✅ Profile updated successfully for \(profile.id).")
+                LoggerService.shared.log(.info, "✅ Profile updated successfully for \(profile.id)", category: LogCategory.sqliteProfile)
             } else {
-                print("❌ Failed to update profile. Error: \(String(cString: sqlite3_errmsg(db)))")
+                LoggerService.shared.log(.error, "❌ Failed to update profile. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
             }
         } else {
-            print("❌ Failed to prepare update statement. Error: \(String(cString: sqlite3_errmsg(db)))")
+            LoggerService.shared.log(.error, "❌ Failed to prepare update statement. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
         }
 
         sqlite3_finalize(statement)
@@ -1232,8 +1890,11 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 1, (userId as NSString).utf8String, -1, nil)
             if sqlite3_step(statement) == SQLITE_ROW {
                 sqlite3_finalize(statement)
+                LoggerService.shared.log(.info, "✅ Profile exists for \(userId)", category: LogCategory.sqliteProfile)
                 return true
             }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare profileExists statement. Error: \(String(cString: sqlite3_errmsg(db)))", category: LogCategory.sqliteProfile)
         }
 
         sqlite3_finalize(statement)
@@ -1251,7 +1912,9 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (userId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) != SQLITE_DONE {
-                print("❌ Failed to update sync status for \(userId)")
+                LoggerService.shared.log(.error, "❌ Failed to update sync status for \(userId)", category: LogCategory.sqliteProfile)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to prepare sync status update for \(userId)", category: LogCategory.sqliteProfile)
             }
         }
 
@@ -1281,10 +1944,10 @@ class SQLiteManager {
 
             // Execute the statement
             if sqlite3_step(statement) != SQLITE_DONE {
-                print("Error deleting profile with userId \(userId)")
+                LoggerService.shared.log(.error, "❌ Error deleting profile with userId \(userId)", category: LogCategory.sqliteProfile)
             }
         } else {
-            print("Failed to prepare delete statement.")
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for userId \(userId)", category: LogCategory.sqliteProfile)
         }
 
         // Finalize the statement to release resources
@@ -1308,7 +1971,7 @@ class SQLiteManager {
         DispatchQueue.main.async {
             self.isLoading = false
             self.errorMessage = error.localizedDescription
-            print("❌ Profile Error: \(error.localizedDescription)")
+            LoggerService.shared.log(.error, "Profile Error: \(error.localizedDescription)", category: LogCategory.sqliteProfile)
         }
     }
 
@@ -1332,9 +1995,9 @@ class SQLiteManager {
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (userId as NSString).utf8String, -1, nil)
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("✅ Deleted profile \(userId)")
+                LoggerService.shared.log(.info, "✅ Deleted profile \(userId)", category: LogCategory.sqliteProfile)
             } else {
-                print("❌ Failed to delete profile.")
+                LoggerService.shared.log(.error, "❌ Failed to delete profile for userId \(userId)", category: LogCategory.sqliteProfile)
             }
         }
         sqlite3_finalize(statement)
@@ -1363,10 +2026,12 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Meetings table created successfully.")
+                LoggerService.shared.log(.info, "✅ Meetings table created successfully.", category: LogCategory.sqliteMeeting)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute create table statement for Meetings.", category: LogCategory.sqliteMeeting)
             }
         } else {
-            print("Error creating meetings table.")
+            LoggerService.shared.log(.error, "❌ Error preparing create table statement for Meetings.", category: LogCategory.sqliteMeeting)
         }
         sqlite3_finalize(statement)
     }
@@ -1382,12 +2047,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local meetings cache cleared successfully.")
+                LoggerService.shared.log(.info, "✅ Local meetings cache cleared successfully.", category: LogCategory.sqliteMeeting)
             } else {
-                print("Failed to clear local meetings cache.")
+                LoggerService.shared.log(.error, "❌ Failed to clear local meetings cache.", category: LogCategory.sqliteMeeting)
             }
         } else {
-            print("Failed to prepare delete statement for meetings cache.")
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for meetings cache.", category: LogCategory.sqliteMeeting)
         }
 
         sqlite3_finalize(statement)
@@ -1424,9 +2089,15 @@ class SQLiteManager {
                 sqlite3_bind_text(statement, 10, (meeting.status as NSString).utf8String, -1, nil)
                 
                 if sqlite3_step(statement) != SQLITE_DONE {
-                    print("Error inserting meeting")
+                    LoggerService.shared.log(.error, "❌ Failed to insert meeting titled '\(meeting.title)'", category: LogCategory.sqliteMeeting)
+                } else {
+                    LoggerService.shared.log(.info, "✅ Inserted meeting titled '\(meeting.title)' successfully.", category: LogCategory.sqliteMeeting)
+                } catch {
+                    LoggerService.shared.log(.error, "❌ JSON encoding error for meeting titled '\(meeting.title)': \(error.localizedDescription)", category: LogCategory.sqliteMeeting)
                 }
                 sqlite3_reset(statement)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to prepare insert statement for meeting titled '\(meeting.title)'", category: LogCategory.sqliteMeeting)
             }
         }
         sqlite3_exec(db, "COMMIT TRANSACTION", nil, nil, nil)  // Commit transaction
@@ -1460,10 +2131,12 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 10, (meeting.status as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Meeting inserted successfully.")
+                LoggerService.shared.log(.info, "✅ Meeting inserted successfully with id: \(meeting.id)", category: LogCategory.sqliteMeeting)
             } else {
-                print("Error inserting meeting.")
+                LoggerService.shared.log(.error, "❌ Error inserting meeting with id: \(meeting.id)", category: LogCategory.sqliteMeeting)
             }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare insert statement for meeting with id: \(meeting.id)", category: LogCategory.sqliteMeeting)
         }
         sqlite3_finalize(statement)
     }
@@ -1500,6 +2173,10 @@ class SQLiteManager {
 
                 meetings.append(meeting)
             }
+            LoggerService.shared.log(.info, "✅ Fetched \(meetings.count) meetings from SQLite.", category: LogCategory.sqliteMeeting)
+
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare fetch statement for Meetings.", category: LogCategory.sqliteMeeting)
         }
         sqlite3_finalize(statement)
         return meetings
@@ -1532,10 +2209,12 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 11, (meeting.id as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Meeting updated successfully.")
+                LoggerService.shared.log(.info, "✅ Meeting updated successfully: \(meeting.id)", category: LogCategory.sqliteMeeting)
             } else {
-                print("Error updating meeting.")
+                LoggerService.shared.log(.error, "❌ Failed to update meeting: \(meeting.id)", category: LogCategory.sqliteMeeting)
             }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare update statement for meeting: \(meeting.id)", category: LogCategory.sqliteMeeting)
         }
         sqlite3_finalize(statement)
     }
@@ -1554,12 +2233,12 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 2, (meetingId as NSString).utf8String, -1, nil)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Meeting status updated successfully.")
+                LoggerService.shared.log(.info, "✅ Meeting status updated successfully for id: \(meetingId)", category: LogCategory.sqliteMeeting)
             } else {
-                print("Failed to update meeting status.")
+                LoggerService.shared.log(.error, "❌ Failed to update meeting status for id: \(meetingId)", category: LogCategory.sqliteMeeting)
             }
         } else {
-            print("Failed to prepare statement.")
+            LoggerService.shared.log(.error, "❌ Failed to prepare update statement for meeting status id: \(meetingId)", category: LogCategory.sqliteMeeting)
         }
 
         sqlite3_finalize(statement)
@@ -1572,7 +2251,13 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (meetingID as NSString).utf8String, -1, nil)
-            sqlite3_step(statement)
+            if sqlite3_step(statement) == SQLITE_DONE {
+                LoggerService.shared.log(.info, "✅ Deleted meeting with id: \(meetingID)", category: LogCategory.sqliteMeeting)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to delete meeting with id: \(meetingID)", category: LogCategory.sqliteMeeting)
+            }
+        } else {
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for meeting id: \(meetingID)", category: LogCategory.sqliteMeeting)
         }
         sqlite3_finalize(statement)
     }
@@ -1600,10 +2285,12 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("VocabCard table created successfully.")
+                LoggerService.shared.log(.info, "✅ VocabCard table created successfully.", category: .LogCategory.sqliteVocabCard)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute create table step for VocabCard.", category: .LogCategory.sqliteVocabCard)
             }
         } else {
-            print("Error creating VocabCard table.")
+            LoggerService.shared.log(.error, "❌ Failed to prepare create table statement for VocabCard.", category: .LogCategory.sqliteVocabCard)
         }
         sqlite3_finalize(statement)
     }
@@ -1619,12 +2306,12 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local vocab cards cache cleared successfully.")
+                LoggerService.shared.log(.info, "✅ Local vocab cards cache cleared successfully.", category: .LogCategory.sqliteVocabCard)
             } else {
-                print("Failed to clear local vocab cards cache.")
+                LoggerService.shared.log(.error, "❌ Failed to clear local vocab cards cache.", category: .LogCategory.sqliteVocabCard)
             }
         } else {
-            print("Failed to prepare delete statement for vocab cards cache.")
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for vocab cards cache.", category: .LogCategory.sqliteVocabCard)
         }
 
         sqlite3_finalize(statement)
@@ -1659,14 +2346,14 @@ class SQLiteManager {
             sqlite3_bind_int(statement, 10, vocabCard.isSynced ? 1 : 0)
 
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab card created successfully.")
+                LoggerService.shared.log(.info, "✅ Vocab card created successfully for id: \(vocabCard.id).", category: .LogCategory.sqliteVocabCard)
             } else {
                 let errorMessage = String(cString: sqlite3_errmsg(db))
-                print("Error creating vocab card: \(errorMessage)")
+                LoggerService.shared.log(.error, "❌ Error creating vocab card \(vocabCard.id): \(errorMessage)", category: .LogCategory.sqliteVocabCard)
             }
         } else {
             let errorMessage = String(cString: sqlite3_errmsg(db))
-            print("Error preparing insert statement: \(errorMessage)")
+            LoggerService.shared.log(.error, "❌ Error preparing insert statement for vocab card \(vocabCard.id): \(errorMessage)", category: .LogCategory.sqliteVocabCard)
         }
 
         sqlite3_finalize(statement)
@@ -1702,10 +2389,10 @@ class SQLiteManager {
                 sqlite3_bind_int(statement, 10, vocabCard.isSynced ? 1 : 0)
 
                 if sqlite3_step(statement) == SQLITE_DONE {
-                    print("Vocab card cached successfully: \(vocabCard.front)")
+                    LoggerService.shared.log(.info, "✅ Vocab card cached successfully: \(vocabCard.front)", category: .LogCategory.sqliteVocabCard)
                 } else {
                     let errorMessage = String(cString: sqlite3_errmsg(db))
-                    print("Failed to cache vocab card (\(vocabCard.front)): \(errorMessage)")
+                    LoggerService.shared.log(.error, "❌ Failed to cache vocab card (\(vocabCard.front)): \(errorMessage)", category: .LogCategory.sqliteVocabCard)
                 }
 
                 sqlite3_reset(statement)
@@ -1713,7 +2400,7 @@ class SQLiteManager {
             }
         } else {
             let errorMessage = String(cString: sqlite3_errmsg(db))
-            print("Error preparing insert statement: \(errorMessage)")
+            LoggerService.shared.log(.error, "❌ Error preparing insert statement for vocab cards: \(errorMessage)", category: .LogCategory.sqliteVocabCard)
         }
 
         sqlite3_finalize(statement)
@@ -1757,11 +2444,11 @@ class SQLiteManager {
                     isSynced: vocabCardIsSynced
                 )
             } else {
-                print("No vocab card found with sheetId: \(sheetId) and id: \(id)")
+                LoggerService.shared.log(.info, "No vocab card found with sheetId: \(sheetId) and id: \(id)", category: .LogCategory.sqliteVocabCard)
             }
         } else {
             let errorMessage = String(cString: sqlite3_errmsg(db))
-            print("Error preparing select statement: \(errorMessage)")
+            LoggerService.shared.log(.error, "Error preparing select statement: \(errorMessage)", category: .LogCategory.sqliteVocabCard)
         }
 
         sqlite3_finalize(statement)
@@ -1796,14 +2483,14 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 8, (vocabCard.id as NSString).utf8String, -1, nil)
             
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab card updated successfully: \(vocabCard.front)")
+                LoggerService.shared.log(.info, "✅ Vocab card updated successfully: \(vocabCard.front)", category: .LogCategory.sqliteVocabCard)
             } else {
                 let errorMessage = String(cString: sqlite3_errmsg(db))
-                print("❌ Error updating vocab card: \(errorMessage)")
+                LoggerService.shared.log(.error, "❌ Error updating vocab card: \(errorMessage)", category: .LogCategory.sqliteVocabCard)
             }
         } else {
             let errorMessage = String(cString: sqlite3_errmsg(db))
-            print("❌ Error preparing update statement: \(errorMessage)")
+            LoggerService.shared.log(.error, "❌ Error preparing update statement: \(errorMessage)", category: .LogCategory.sqliteVocabCard)
         }
         
         sqlite3_finalize(statement)
@@ -1817,12 +2504,13 @@ class SQLiteManager {
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (id as NSString).utf8String, -1, nil)
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab card deleted successfully.")
+                LoggerService.shared.log(.info, "✅ Vocab card deleted successfully (id: \(id)).", category: LogCategory.sqliteVocabCard)
             } else {
-                print("Error deleting vocab card.")
+                LoggerService.shared.log(.error, "❌ Error deleting vocab card (id: \(id)).", category: LogCategory.sqliteVocabCard)
             }
         } else {
-            print("Error preparing delete statement.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Error preparing delete statement for vocab card (id: \(id)) — \(errorMessage)", category: LogCategory.sqliteVocabCard)
         }
         
         sqlite3_finalize(statement)
@@ -1848,10 +2536,13 @@ class SQLiteManager {
         var statement: OpaquePointer?
         if sqlite3_prepare_v2(db, createTableQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("VocabSheet table created successfully.")
+                LoggerService.shared.log(.info, "✅ VocabSheet table created successfully.", category: LogCategory.sqliteVocabSheet)
+            } else {
+                LoggerService.shared.log(.error, "❌ Failed to execute VocabSheet table creation.", category: LogCategory.sqliteVocabSheet)
             }
         } else {
-            print("Error creating VocabSheet table.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Error preparing VocabSheet table creation: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
         sqlite3_finalize(statement)
     }
@@ -1868,12 +2559,13 @@ class SQLiteManager {
 
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Local vocab sheet cache cleared successfully.")
+                LoggerService.shared.log(.info, "✅ Local vocab sheet cache cleared successfully.", category: LogCategory.sqliteVocabSheet)
             } else {
-                print("Failed to clear local vocab sheet cache.")
+                LoggerService.shared.log(.error, "❌ Failed to clear local vocab sheet cache.", category: LogCategory.sqliteVocabSheet)
             }
         } else {
-            print("Failed to prepare delete statement for vocab sheet cache.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for vocab sheet cache: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
 
         sqlite3_finalize(statement)
@@ -1899,12 +2591,14 @@ class SQLiteManager {
             sqlite3_bind_int(statement, 8, vocabSheet.isSynced ? 1 : 0)  // Store as 1 (true) or 0 (false)
             
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab sheet created successfully.")
+                LoggerService.shared.log(.info, "✅ Vocab sheet created successfully: \(vocabSheet.name)", category: LogCategory.sqliteVocabSheet)
             } else {
-                print("Error creating vocab sheet.")
+                let errorMessage = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "❌ Error creating vocab sheet: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
             }
         } else {
-            print("Error preparing insert statement.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Error preparing insert statement for vocab sheet: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
         
         sqlite3_finalize(statement)
@@ -1929,6 +2623,7 @@ class SQLiteManager {
                 let vocabSheetIsSynced = sqlite3_column_int(statement, 7) == 1
                 
                 sqlite3_finalize(statement)
+                LoggerService.shared.log(.info, "✅ Vocab sheet fetched successfully: \(vocabSheetName)", category: LogCategory.sqliteVocabSheet)
                 return VocabSheetModel(
                     id: vocabSheetId,
                     name: vocabSheetName,
@@ -1941,15 +2636,17 @@ class SQLiteManager {
                     isSynced: vocabSheetIsSynced
                 )
             } else {
-                print("No vocab sheet found with id: \(id)")
+                LoggerService.shared.log(.warning, "No vocab sheet found with id: \(id)", category: LogCategory.sqliteVocabSheet)
                 sqlite3_finalize(statement)
                 return nil
             }
         } else {
-            print("Error preparing select statement.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Error preparing select statement for vocab sheet: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
+        }
             sqlite3_finalize(statement)
             return nil
-        }
+        
     }
 
 
@@ -1972,12 +2669,14 @@ class SQLiteManager {
             sqlite3_bind_text(statement, 7, (vocabSheet.id as NSString).utf8String, -1, nil)
             
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab sheet updated successfully.")
+                LoggerService.shared.log(.info, "✅ VocabSheet updated successfully: \(vocabSheet.name)", category: LogCategory.sqliteVocabSheet)
             } else {
-                print("Error updating vocab sheet.")
+                let errorMessage = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "❌ Failed to update VocabSheet (\(vocabSheet.name)): \(errorMessage)", category: LogCategory.sqliteVocabSheet)
             }
         } else {
-            print("Error preparing update statement.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare update statement for VocabSheet (\(vocabSheet.name)): \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
         
         sqlite3_finalize(statement)
@@ -2012,6 +2711,11 @@ class SQLiteManager {
                     isSynced: vocabSheetIsSynced
                 ))
             }
+            LoggerService.shared.log(.info, "✅ Fetched \(unsyncedSheets.count) unsynced vocab sheets", category: LogCategory.sqliteVocabSheet)
+
+        } else {
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare select statement for unsynced vocab sheets: \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
         
         sqlite3_finalize(statement)
@@ -2028,12 +2732,14 @@ class SQLiteManager {
         if sqlite3_prepare_v2(db, deleteQuery, -1, &statement, nil) == SQLITE_OK {
             sqlite3_bind_text(statement, 1, (id as NSString).utf8String, -1, nil)
             if sqlite3_step(statement) == SQLITE_DONE {
-                print("Vocab sheet deleted successfully.")
+                LoggerService.shared.log(.info, "✅ Vocab sheet deleted successfully (id: \(id))", category: LogCategory.sqliteVocabSheet)
             } else {
-                print("Error deleting vocab sheet.")
+                let errorMessage = String(cString: sqlite3_errmsg(db))
+                LoggerService.shared.log(.error, "❌ Failed to delete vocab sheet (id: \(id)): \(errorMessage)", category: LogCategory.sqliteVocabSheet)
             }
         } else {
-            print("Error preparing delete statement.")
+            let errorMessage = String(cString: sqlite3_errmsg(db))
+            LoggerService.shared.log(.error, "❌ Failed to prepare delete statement for vocab sheet (id: \(id)): \(errorMessage)", category: LogCategory.sqliteVocabSheet)
         }
         
         sqlite3_finalize(statement)
@@ -2063,6 +2769,8 @@ class SQLiteManager {
         clearLocalVocabCardsCache()
         clearLocalMeetingsCache()
         clearLocalProfilesCache()
+        clearLocalNotificationsCache()
+        clearLocalNotificationSettingsCache()
     }
 
     

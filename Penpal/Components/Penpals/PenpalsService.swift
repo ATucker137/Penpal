@@ -8,154 +8,114 @@ import Foundation
 import Firebase
 import FirebaseFirestore
 import FirebaseFirestoreSwift
-
-
-import Foundation
-import FirebaseFirestore
 import FirebaseAuth
 
-/// Service responsible for fetching and updating potential penpal matches.
-class PenpalsService {
-    private let db = Firestore.firestore() // Reference to Firestore database
-    private var profileListener: ListenerRegistration? // Listener for tracking user profile changes
-    
-    /// Starts listening for changes in the user's profile.
-    /// If the user updates hobbies, goals, or proficiency, fetch new potential matches.
-    // MARK: - Listen For Profile Changes
+final class PenpalsService {
+    private let db = Firestore.firestore()
+    private var profileListener: ListenerRegistration?
+    private let category = "PenpalsService"
+
+    // MARK: - Firestore wire prefs (primitive types)
+    struct LookingForPrefs: Codable {
+        let hobbyIds: [String]
+        let regions: [String]
+        let proficiencyLevel: String?   // ProficiencyLevel.rawValue
+        let languageCode: String?       // Language.languageCode
+    }
+
+    // MARK: - Profile changes
     func listenForProfileChanges(userId: String) {
-        profileListener = db.collection("users").document(userId).addSnapshotListener { [weak self] snapshot, error in
-            guard let self = self, let data = snapshot?.data(), error == nil else { return }
-            
-            // Extract user details from Firestore document
-            if let hobbies = data["hobbies"] as? [String],
-               let goals = data["goals"] as? String,
-               let proficiency = data["proficiency"] as? String {
-                
-                print("Profile updated! Fetching new matches...")
-                
-                
-                // Fetch and update potential matches whenever the user's profile changes
-                self.syncAndFetchMatches(userId: userId) { result in
-                    switch result {
-                    case .success(let matches):
-                        // Optionally, update the UI with the new matches, if needed
-                        print("Successfully fetched and synced matches for user: \(userId).")
-                    case .failure(let error):
-                        print("Error fetching matches: \(error)")
-                    }
-                }
+        LoggerService.shared.log(.info, "Listening for profile changes for user: \(userId)", category: category)
+        profileListener?.remove()
+        profileListener = db.collection("users").document(userId).addSnapshotListener { [weak self] _, error in
+            if let error = error {
+                LoggerService.shared.log(.error, "Profile listener error: \(error.localizedDescription)", category: self?.category ?? "PenpalsService")
+            } else {
+                LoggerService.shared.log(.info, "Profile changed for \(userId)", category: self?.category ?? "PenpalsService")
             }
         }
     }
-    
-    /// Queries Firestore to fetch penpal matches based on dynamic criteria such as shared interests, goals, and proficiency levels.
-    /// This function performs a **live query** to find users who meet certain conditions, like similar hobbies, proficiency levels, goals, or other factors.
-    ///
-    /// **Purpose**: This function is designed to perform a **real-time search** of potential penpal matches for a given user based on the current, dynamic data (i.e., interests, goals, proficiency) of the user and potential penpals.
-    ///
-    /// **When to Use**: Use this when you want to dynamically **fetch and match** users who meet specific criteria at the time of the query. The query may use parameters such as hobbies, proficiency level, and other factors to find penpals who meet the current user's needs.
-    ///
-    /// **Example Scenario**: A user wants to find penpals who share similar hobbies like "traveling" and "reading" and are at the same proficiency level. The app dynamically fetches these potential matches by querying Firestore using those parameters.
-        
-    // MARK: - Fetch Matches Based on Criteria
-    func fetchMatchesForUser(userId: String, interests: [String], goals: String, proficiencyLevel: String, completion: @escaping (Result<[PenpalsModel], Error>) -> Void) {
-        let db = Firestore.firestore()
 
-        db.collection("users")
-            .whereField("hobbies", arrayContainsAny: interests) // Filter by hobbies
-            .whereField("goals", isEqualTo: goals) // Filter by goals
-            .whereField("proficiency", isEqualTo: proficiencyLevel) // Filter by proficiency level
-            .getDocuments { snapshot, error in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
+    deinit { profileListener?.remove() }
 
-                guard let documents = snapshot?.documents else {
-                    completion(.success([]))
-                    return
-                }
-
-                let matches: [PenpalsModel] = documents.compactMap { doc in
-                    let data = doc.data()
-
-                    guard let penpalId = data["userId"] as? String,
-                          let firstName = data["firstName"] as? String,
-                          let lastName = data["lastName"] as? String,
-                          let proficiency = data["proficiency"] as? String,
-                          let hobbies = data["hobbies"] as? [String],
-                          let goals = data["goals"] as? String,
-                          let region = data["region"] as? String
-                    else {
-                        return nil
-                    }
-
-                    return PenpalsModel(
-                        userId: userId,
-                        penpalId: penpalId,
-                        firstName: firstName,
-                        lastName: lastName,
-                        proficiency: proficiency,
-                        hobbies: hobbies,
-                        goals: goals,
-                        region: region
-                    )
-                }
-
-                completion(.success(matches))
-            }
+    // MARK: - Looking For (save/load)
+    func updateLookingFor(userId: String, prefs: LookingForPrefs, completion: @escaping (Bool) -> Void) {
+        let doc = db.collection("users").document(userId)
+        let payload: [String: Any] = [
+            "lookingFor": [
+                "hobbyIds": prefs.hobbyIds,
+                "regions": prefs.regions,
+                "proficiencyLevel": prefs.proficiencyLevel as Any,
+                "languageCode": prefs.languageCode as Any
+            ],
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        doc.setData(payload, merge: true) { err in completion(err == nil) }
     }
 
-    
-    
-    /// Fetches potential penpal matches based on shared interests.
-    /// This function queries Firestore to find users with similar hobbies, goals, and proficiency levels.
-    ///
-    /// **Purpose**: This function fetches **pre-calculated matches** that have already been assigned or stored in the
-    /// `potentialMatches` collection. It retrieves matches that the app has already identified and scored in advance,
-    /// based on shared interests or other criteria.
-    ///
-    /// **When to Use**: Use this when you want to fetch **pre-determined matches** for a user that may already be stored.
-    /// This could be based on an earlier matching process or when a set of matches has been curated and stored in Firestore,
-    /// ready to be retrieved quickly without re-running the query logic.
-    ///
-    /// **Example Scenario**: A user has already been matched with several other users based on shared interests or goals.
-    /// Now, you want to fetch and display these pre-filtered matches stored in your app's database.
-        
-    // MARK: - Fetch Matches
-    func fetchPotentialMatchesFromFirestore(for userId: String, completion: @escaping (Result<[PenpalsModel], Error>) -> Void) {
-        let db = Firestore.firestore()
+    func fetchLookingFor(userId: String, completion: @escaping (PenpalsViewModel.LookingFor) -> Void) {
+        db.collection("users").document(userId).getDocument { snap, _ in
+            let lf = (snap?.data()?["lookingFor"] as? [String: Any]) ?? [:]
+            let hobbyIds = lf["hobbyIds"] as? [String] ?? []
+            let regions = lf["regions"] as? [String] ?? []
+            let profRaw = lf["proficiencyLevel"] as? String
+            let langCode = lf["languageCode"] as? String
 
+            let hobbies = hobbyIds.compactMap { id in Hobbies.predefinedHobbies.first { $0.id == id } }
+            let proficiency = profRaw.flatMap { ProficiencyLevel(rawValue: $0) }
+            let language = langCode.flatMap { code in Language.predefinedLanguages.first { $0.languageCode == code } }
+
+            completion(PenpalsViewModel.LookingFor(hobbies: hobbies, regions: regions, proficiency: proficiency, language: language))
+        }
+    }
+
+    // MARK: - Fetch potential matches (pre-calculated feed)
+    func fetchPotentialMatchesFromFirestore(for userId: String, completion: @escaping (Result<[PenpalsModel], Error>) -> Void) {
         db.collection("potentialMatches")
             .whereField("userId", isEqualTo: userId)
             .getDocuments { snapshot, error in
                 if let error = error {
-                    completion(.failure(error))
-                    return
+                    completion(.failure(error)); return
                 }
 
-                guard let documents = snapshot?.documents else {
-                    completion(.success([]))
-                    return
-                }
-
-                let matches: [PenpalsModel] = documents.compactMap { doc in
+                let matches: [PenpalsModel] = (snapshot?.documents ?? []).compactMap { doc in
                     let data = doc.data()
-                    
-                    guard let penpalId = data["penpalId"] as? String,
-                          let firstName = data["firstName"] as? String,
-                          let lastName = data["lastName"] as? String,
-                          let proficiency = data["proficiency"] as? String,
-                          let hobbies = data["hobbies"] as? [String],
-                          let goals = data["goals"] as? String,
-                          let region = data["region"] as? String,
-                          let matchScore = data["matchScore"] as? Int,
-                          let statusRaw = data["status"] as? String,
-                          let status = MatchStatus(rawValue: statusRaw)
-                    else {
-                        return nil
+
+                    guard
+                        let penpalId = data["penpalId"] as? String,
+                        let firstName = data["firstName"] as? String,
+                        let lastName = data["lastName"] as? String,
+                        let region = data["region"] as? String,
+                        let profileImageURL = data["profileImageURL"] as? String,
+                        let statusRaw = data["status"] as? String,
+                        let status = PenpalStatus(rawValue: statusRaw)
+                    else { return nil }
+
+                    // proficiency dict → LanguageProficiency
+                    let proficiency: LanguageProficiency = {
+                        if let dict = data["proficiency"] as? [String: Any],
+                           let p = LanguageProficiency.fromDict(dict) { return p }
+                        // fallback default to avoid crash
+                        return LanguageProficiency(language: Language(id: "1", name: "English", languageCode: "en"), level: .beginner, isNative: false)
+                    }()
+
+                    // hobbies [String] (ids/names) → [Hobbies]
+                    let hobbyTokens = (data["hobbies"] as? [String]) ?? []
+                    let hobbies: [Hobbies] = hobbyTokens.compactMap { token in
+                        Hobbies.predefinedHobbies.first { $0.id == token || $0.name == token }
                     }
-                    
+
+                    // goal dict → Goals?
+                    var goal: Goals? = nil
+                    if let goalDict = data["goal"] as? [String: Any] {
+                        goal = Goals.fromDict(goalDict)
+                    } else if let goalId = data["goalId"] as? String {
+                        goal = Goals.all.first(where: { $0.id == goalId })
+                    }
+
+                    let matchScore = data["matchScore"] as? Int
+                    let isSynced = data["isSynced"] as? Bool ?? false
+
                     return PenpalsModel(
                         userId: userId,
                         penpalId: penpalId,
@@ -163,201 +123,237 @@ class PenpalsService {
                         lastName: lastName,
                         proficiency: proficiency,
                         hobbies: hobbies,
-                        goals: goals,
+                        goal: goal,
                         region: region,
                         matchScore: matchScore,
-                        status: status
+                        status: status,
+                        profileImageURL: profileImageURL,
+                        isSynced: isSynced
                     )
                 }
 
+                LoggerService.shared.log(.info, "Fetched \(matches.count) potential matches", category: self.category)
                 completion(.success(matches))
             }
     }
 
-    
-    // MARK: - Sync And Fetch Matches
-    func syncAndFetchMatches(userId: String, completion: @escaping (Result<[PenpalsModel], Error>) -> Void) {
-        fetchPotentialMatchesFromFirestore(for: userId) { [weak self] result in
-            switch result {
-            case .success(let matches):
-                self?.sqliteManager.cachePenpals(matches)
-                completion(.success(matches))
-            case .failure:
-                print("Fetching from Firestore failed — falling back to SQLite.")
-                let cached = self?.sqliteManager.getCachedPenpals(for: userId) ?? []
-                completion(.success(cached))
-            }
-        }
-    }
-
-    
-    /// Updates the match status (Approved, Pending, Declined) for a given penpal.
-    // MARK: - Update Match Status
-    func updateMatchStatus(penpalId: String, newStatus: MatchStatus) {
-        let db = Firestore.firestore()
-        let matchRef = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
-        
-        matchRef.updateData(["status": newStatus.rawValue]) { error in
-            if let error = error {
-                print("Error updating match status: \(error)")
-            } else {
-                DispatchQueue.main.async {
-                    if let index = self.potentialMatches.firstIndex(where: { $0.penpalId == penpalId }) {
-                        self.potentialMatches[index].status = newStatus
-                    }
-                }
-            }
-        }
-    }
-    
-    
-    /// Calculates a match score based on the number of shared hobbies between users.
-    /// - Returns: An integer representing the match quality (higher score = better match).
-    // MARK: - Calculate Matcher Score of A User
-    // TODO: - Also Needs To Add Goals, Time Preference, Language Target maybe region
-    private func calculateMatchScore(userHobbies: [String], penpalHobbies: [String]) -> Int {
-        let commonInterests = Set(userHobbies).intersection(Set(penpalHobbies)) // Find shared hobbies
-        return commonInterests.count * 10 // Assign 10 points per shared hobby
-    }
-    
-    /// Updates potential matches in Firestore using batch writes for efficiency.
-    /// This ensures all matches are updated at once, reducing database writes.
-    // MARK: - UPdate Potential Matches
-    private func updatePotentialMatches(userId: String, matches: [PenpalsModel]) {
+    // MARK: - Optional: batch write potential matches
+    func updatePotentialMatches(userId: String, matches: [PenpalsModel], completion: ((Bool) -> Void)? = nil) {
         let batch = db.batch()
-        let matchesRef = db.collection("potentialMatches")
+        let col = db.collection("potentialMatches")
 
-        for match in matches {
-            let matchRef = matchesRef.document("\(userId)_\(match.penpalId)") // Unique document ID per match
-            
-            // Store match details in Firestore
-            batch.setData([
-                "userId": match.userId,
-                "penpalId": match.penpalId,
-                "firstName": match.firstName,
-                "lastName": match.lastName,
-                "proficiency": match.proficiency,
-                "hobbies": match.hobbies,
-                "goals": match.goals,
-                "region": match.region,
-                "matchScore": match.matchScore,
-                "status": match.status.rawValue // Convert enum to string for storage
-            ], forDocument: matchRef)
+        for m in matches {
+            let ref = col.document("\(userId)_\(m.penpalId)")
+            var data: [String: Any] = [
+                "userId": userId,
+                "penpalId": m.penpalId,
+                "firstName": m.firstName,
+                "lastName": m.lastName,
+                "region": m.region,
+                "proficiency": m.proficiency.toDict(),
+                "hobbies": m.hobbies.map { $0.id },
+                "profileImageURL": m.profileImageURL,
+                "status": m.status.rawValue,
+                "isSynced": m.isSynced,
+                "updatedAt": FieldValue.serverTimestamp()
+            ]
+            if let goalDict = m.goal?.toDict() { data["goal"] = goalDict }
+            if let score = m.matchScore { data["matchScore"] = score }
+            batch.setData(data, forDocument: ref, merge: true)
         }
 
-        // Commit all updates in a single batch operation
-        batch.commit { error in
-            if let error = error {
-                print("Error updating matches: \(error)")
-            } else {
-                print("Potential matches updated successfully.")
-            }
+        batch.commit { err in
+            completion?(err == nil)
         }
     }
-    
-    // Update match status
-    func updateMatchStatus(penpalId: String, newStatus: MatchStatus, userId: String, completion: @escaping (Bool) -> Void) {
-        let matchRef = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
-        
-        matchRef.updateData(["status": newStatus.rawValue]) { error in
-            if let error = error {
-                print("Error updating match status: \(error)")
-                completion(false)
-            } else {
-                completion(true)
-            }
-        }
+
+    // MARK: - Match status & requests
+    func updateMatchStatus(penpalId: String, newStatus: PenpalStatus, userId: String, completion: @escaping (Bool) -> Void) {
+        let ref = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
+        ref.updateData([
+            "status": newStatus.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ]) { error in completion(error == nil) }
     }
-    
-    // Send friend request
+
     func sendFriendRequest(to penpalId: String, userId: String, completion: @escaping (Bool) -> Void) {
-        let matchRef = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
-        
-        matchRef.setData(["status": MatchStatus.pending.rawValue]) { error in
-            if let error = error {
-                print("Error sending friend request: \(error)")
-                completion(false)
-            } else {
-                print("Friend request sent successfully.")
-                completion(true)
-            }
-        }
+        LoggerService.shared.log(.info, "Sending friend request to \(penpalId)", category: category)
+        let ref = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
+        ref.setData([
+            "userId": userId,
+            "penpalId": penpalId,
+            "status": PenpalStatus.pending.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ], merge: true) { error in completion(error == nil) }
     }
 
-    // Decline friend request
     func declineFriendRequest(from penpalId: String, userId: String, completion: @escaping (Bool) -> Void) {
-        let matchRef = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
-        
-        matchRef.updateData(["status": MatchStatus.declined.rawValue]) { error in
-            if let error = error {
-                print("Error declining friend request: \(error)")
-                completion(false)
-            } else {
-                print("Friend request declined successfully.")
-                completion(true)
-            }
-        }
+        let ref = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
+        ref.setData([
+            "userId": userId,
+            "penpalId": penpalId,
+            "status": PenpalStatus.declined.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ], merge: true) { error in completion(error == nil) }
     }
 
-    // Accept friend request
     func acceptFriendRequest(from penpalId: String, userId: String, completion: @escaping (Bool) -> Void) {
-        let matchRef = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
-        
-        matchRef.updateData(["status": MatchStatus.approved.rawValue]) { error in
+        let ref = db.collection("potentialMatches").document("\(userId)_\(penpalId)")
+        ref.setData([
+            "userId": userId,
+            "penpalId": penpalId,
+            "status": PenpalStatus.approved.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ], merge: true) { error in completion(error == nil) }
+    }
+
+
+    // MARK: - Sync Penpal into subcollection
+    /// VM calls: penpalService.syncPenpal(with: penpalId) { success, error in ... }
+    func syncPenpal(with penpalId: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(false, "No authenticated user"); return
+        }
+        LoggerService.shared.log(.info, "Sync penpal \(penpalId) for \(uid)", category: category)
+        let ref = db.collection("users").document(uid).collection("penpals").document(penpalId)
+        ref.setData([
+            "status": PenpalStatus.approved.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ], merge: true) { error in
             if let error = error {
-                print("Error accepting friend request: \(error)")
-                completion(false)
+                completion(false, error.localizedDescription)
             } else {
-                print("Friend request accepted.")
-                // Sync penpal data here (if necessary)
-                completion(true)
+                completion(true, nil)
             }
         }
     }
-    
-    // MARK: - Enforce Penpal Limit
-    
-    // MARK: - Sync Penpal
-    func syncPenpal(with penpalId: String) {
-        let userPenpalRef = db.collection("users").document(userId ?? "").collection("penpals").document(penpalId)
-        
-        userPenpalRef.setData(["status": "active", "updatedAt": Timestamp(date: Date())]) { error in
-            if let error = error {
-                print("Error syncing penpal: \(error)")
-            } else {
-                print("Penpal synced successfully.")
-            }
-        }
-    }
-    
-    // MARK: -  Delete Penpals
+
+    // MARK: - Delete & fetch approved penpals
     func deletePenpal(penpalId: String, for userId: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        let penpalRef = db
-            .collection("users")
-            .document(userId)
-            .collection("penpals")
-            .document(penpalId)
+        let ref = db.collection("users").document(userId).collection("penpals").document(penpalId)
+        ref.delete { error in
+            if let error = error { completion(.failure(error)) }
+            else { completion(.success(())) }
+        }
+    }
 
-        penpalRef.delete { error in
-            if let error = error {
-                print("Failed to delete penpal: \(error)")
-                completion(.failure(error))
-            } else {
-                print("Successfully deleted penpal: \(penpalId)")
-                completion(.success(()))
+    func fetchApprovedPenpals(for userId: String, completion: @escaping (Result<[PenpalsModel], Error>) -> Void) {
+        db.collection("users").document(userId).collection("penpals")
+            .whereField("status", isEqualTo: PenpalStatus.approved.rawValue)
+            .getDocuments { snapshot, error in
+                if let error = error { completion(.failure(error)); return }
+                let list: [PenpalsModel] = (snapshot?.documents ?? []).compactMap {
+                    PenpalsModel.fromFireStoreData($0.data())
+                }
+                completion(.success(list))
+            }
+    }
+
+    // MARK: - Swipe limits (atomic)
+    func tryConsumeSwipe(userId: String, maxPerDay: Int, completion: @escaping (Result<Int, Error>) -> Void) {
+        let doc = db.collection("rateLimits").document(userId)
+        let todayKey = Self.dayKeyFormatter.string(from: Date())
+
+        db.runTransaction({ txn, _ -> Any? in
+            let snap: DocumentSnapshot
+            do {
+                snap = try txn.getDocument(doc)
+            } catch {
+                // First swipe today: create doc and count this swipe
+                txn.setData([
+                    "used": 1,
+                    "max": maxPerDay,
+                    "day": todayKey,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ], forDocument: doc, merge: true)
+                return ["remaining": max(0, maxPerDay - 1)]
+            }
+
+            var data = snap.data() ?? [:]
+            let day = (data["day"] as? String) ?? todayKey
+            var used = (data["used"] as? Int) ?? 0
+            let maxVal = (data["max"] as? Int) ?? maxPerDay
+
+            if day != todayKey { used = 0; data["day"] = todayKey }
+
+            guard used < maxVal else {
+                // Signal blocked (don’t throw → VM won’t fall back to local)
+                txn.setData(["day": day, "used": used, "max": maxVal], forDocument: doc, merge: true)
+                return "BLOCKED"
+            }
+
+            used += 1
+            data["used"] = used
+            data["max"] = maxVal
+            data["updatedAt"] = FieldValue.serverTimestamp()
+            txn.setData(data, forDocument: doc, merge: true)
+            return ["remaining": max(0, maxVal - used)]
+        }) { result, error in
+            if let error = error { completion(.failure(error)); return }
+            if let marker = result as? String, marker == "BLOCKED" { completion(.success(-1)); return }
+            if let dict = result as? [String: Int], let remaining = dict["remaining"] { completion(.success(remaining)); return }
+
+            // Fallback (should be rare)
+            doc.getDocument { snap, _ in
+                let used = snap?.data()?["used"] as? Int ?? 0
+                let maxVal = snap?.data()?["max"] as? Int ?? maxPerDay
+                completion(.success(max(0, maxVal - used)))
             }
         }
     }
-    
-    // MARK: - Cache Penpals Also Goes Here?
-    
-    // MARK: - Count Cached Penpals
-    
-    // MARK: - Fetch Cached Penpals
-    
-    
-    // TODO: - Update the things user is looking for
 
-    // TODO: - Notify The User Penpal On People that want user to be their penpal
+
+
+    func fetchSwipeStatus(userId: String, maxPerDay: Int, completion: @escaping (_ remaining: Int, _ windowEndsAt: Date) -> Void) {
+        let doc = db.collection("rateLimits").document(userId)
+        let todayKey = Self.dayKeyFormatter.string(from: Date())
+        doc.getDocument { snap, _ in
+            let data = snap?.data() ?? [:]
+            let day = (data["day"] as? String) ?? todayKey
+            let used = (data["used"] as? Int) ?? 0
+            let maxVal = (data["max"] as? Int) ?? maxPerDay
+            let remaining = (day == todayKey) ? max(0, maxVal - used) : maxVal
+            let windowEnds = Calendar.current.startOfDay(for: Date()).addingTimeInterval(24 * 60 * 60)
+            completion(remaining, windowEnds)
+        }
+    }
+
+    func grantBonusSwipes(userId: String, amount: Int, maxPerDay: Int, completion: @escaping (Bool) -> Void) {
+        guard amount > 0 else { completion(false); return }
+        let doc = db.collection("rateLimits").document(userId)
+        db.runTransaction({ txn, _ -> Any? in
+            let snap = try txn.getDocument(doc)
+            let todayKey = Self.dayKeyFormatter.string(from: Date())
+            var data = snap.data() ?? [:]
+            let day = (data["day"] as? String) ?? todayKey
+            var used = (data["used"] as? Int) ?? 0
+            let maxVal = (data["max"] as? Int) ?? maxPerDay
+            if day != todayKey { used = 0; data["day"] = todayKey }
+            used = max(0, used - amount)
+            data["used"] = used
+            data["max"] = maxVal
+            data["updatedAt"] = FieldValue.serverTimestamp()
+            txn.setData(data, forDocument: doc, merge: true)
+            return nil
+        }) { _, error in
+            completion(error == nil)
+        }
+    }
+
+    func setDailySwipeAllowance(userId: String, newMax: Int, completion: @escaping (Bool) -> Void) {
+        db.collection("rateLimits").document(userId)
+            .setData(["max": max(0, newMax),
+                      "updatedAt": FieldValue.serverTimestamp()],
+                     merge: true) { err in completion(err == nil) }
+    }
+
+    private static let dayKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar.current
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+    
+    
 }
-

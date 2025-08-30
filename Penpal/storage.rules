@@ -1,0 +1,42 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    //////////////////////////////////////////////////////////////////////////
+    // Profile Photos
+    //////////////////////////////////////////////////////////////////////////
+    match /profiles/{userId}/{allPaths=**} {
+      // Everyone can read public profile pictures
+      allow read:  if true;
+      // Only the user may upload or overwrite their own photos
+      allow write: if request.auth != null
+                   && request.auth.uid == userId;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Message Attachments (images, files)
+    //////////////////////////////////////////////////////////////////////////
+    match /messages/{conversationId}/{messageId}/{allPaths=**} {
+      // Helper to check chat membership
+      function isParticipant() {
+        return request.auth != null
+          && exists(
+               /databases/$(database)/documents/conversations/$(conversationId)
+             )
+          && request.auth.uid in get(
+               /databases/$(database)/documents/conversations/$(conversationId)
+             ).data.participants;
+      }
+
+      // Only chat participants can upload or download attachments
+      allow read, write: if isParticipant();
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Default Deny all other paths
+    //////////////////////////////////////////////////////////////////////////
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

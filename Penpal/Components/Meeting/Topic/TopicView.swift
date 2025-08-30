@@ -20,9 +20,12 @@ struct TopicView: View {
    
     // Initializer to set up the ViewModels and meeting ID
     init(meetingId: String) {
-        _meetingViewModel = StateObject(wrappedValue: MeetingViewModel())
-        _viewModel = StateObject(wrappedValue: TopicViewModel(meetingViewModel: meetingViewModel))
+        let meetingVM = MeetingViewModel()
+        _meetingViewModel = StateObject(wrappedValue: meetingVM)
+        _viewModel = StateObject(wrappedValue: TopicViewModel(meetingViewModel: meetingVM))
+        self.meetingId = meetingId
     }
+
     
     var body: some View {
         VStack {
@@ -90,6 +93,12 @@ struct TopicView: View {
                 .padding()
                 .disabled(selectedTopics.isEmpty || selectedSubcategories.isEmpty)
             }
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+
         }
         .onAppear {
             meetingViewModel.fetchMeeting(meetingId: meetingId) // Fetch meeting data
@@ -97,8 +106,8 @@ struct TopicView: View {
     }
     
     // Function to toggle selection of topics and subcategories
-    func toggleSelection(for topic: String, subcategory: String) {
-        
+    func toggleSelection(topic: String, subcategory: String) {
+
         // Check if two topics are already selected
         if selectedTopics.count == 2 && !selectedTopics.contains(topic) {
             // Display an error message
@@ -134,6 +143,7 @@ struct TopicView: View {
         print("Confirmed Subcategories: \(selectedSubcategories)")
         
         // Navigate back to the MeetingView after confirming
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
+
     }
 }
