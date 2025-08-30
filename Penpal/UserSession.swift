@@ -9,6 +9,7 @@
 
 import Foundation
 import Combine
+import FirebaseAuth
 
 class UserSession: ObservableObject {
     static let shared = UserSession() // Singleton instance
@@ -18,10 +19,35 @@ class UserSession: ObservableObject {
     @Published var userName: String?
     @Published var profileImageURL: String?
     @Published var isLoggedIn: Bool = false
+    private var cancellables = Set<AnyCancellable>()
+
     
     private init() {
         // Optionally load saved session data from persistent storage (e.g., UserDefaults or Keychain)
         loadSession()
+        observeAuthState()
+
+    }
+    
+    // Subscribe to FirebaseAuthManager’s currentUser publisher
+    private func observeAuthState() {
+        FirebaseAuthManager.shared.$currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                guard let self = self else { return }
+                
+                if let user = user {
+                    self.userId = user.uid
+                    self.email = user.email
+                    self.isLoggedIn = true
+                    LoggerService.shared.log(.info, "✅ UserSession updated with userId: \(user.uid)", category: LogCategory.auth)
+                    self.saveToPersistentStorage()
+                } else {
+                    self.clearSession()
+                    LoggerService.shared.log(.info, "🔒 UserSession cleared after logout", category: LogCategory.auth)
+                }
+            }
+            .store(in: &cancellables)
     }
     
     // Save user session details
@@ -31,13 +57,14 @@ class UserSession: ObservableObject {
         self.userName = userName
         self.profileImageURL = profileImageURL
         self.isLoggedIn = true
-        
+        LoggerService.shared.log(.info, "✅ Session saved for userId: \(userId)", category: LogCategory.auth)
         // Save to persistent storage
         saveToPersistentStorage()
     }
     
     // Clear user session
     func clearSession() {
+        LoggerService.shared.log(.info, "Clearing session data", category: LogCategory.auth)
         self.userId = nil
         self.email = nil
         self.userName = nil
@@ -57,6 +84,9 @@ class UserSession: ObservableObject {
             self.userName = UserDefaults.standard.string(forKey: "userName")
             self.profileImageURL = UserDefaults.standard.string(forKey: "profileImageURL")
             self.isLoggedIn = true
+            LoggerService.shared.log(.info, "✅ Loaded session from storage for userId: \(storedUserId)", category: LogCategory.auth)
+        } else {
+            LoggerService.shared.log(.info, "No existing session found in storage", category: LogCategory.auth)
         }
     }
     
@@ -66,6 +96,8 @@ class UserSession: ObservableObject {
         UserDefaults.standard.set(email, forKey: "email")
         UserDefaults.standard.set(userName, forKey: "userName")
         UserDefaults.standard.set(profileImageURL, forKey: "profileImageURL")
+        LoggerService.shared.log(.info, "Saved session data to UserDefaults", category: LogCategory.auth)
+
     }
     
     // Clear session data from persistent storage
@@ -74,6 +106,8 @@ class UserSession: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "email")
         UserDefaults.standard.removeObject(forKey: "userName")
         UserDefaults.standard.removeObject(forKey: "profileImageURL")
+        LoggerService.shared.log(.info, "Cleared session data from UserDefaults", category: LogCategory.auth)
+
     }
     
     // MARK: - Logout and Clear All User Data
@@ -83,8 +117,10 @@ class UserSession: ObservableObject {
         // Sign out from Firebase
         do {
             try FirebaseAuthManager.shared.signOut()
+            LoggerService.shared.log(.info, "✅ Firebase sign-out successful", category: LogCategory.auth)
+
         } catch {
-            print("Error signing out: \(error.localizedDescription)")
+            LoggerService.shared.log(.error, "❌ Firebase sign-out failed: \(error.localizedDescription)", category: LogCategory.auth)
         }
         
         // Clear session state
@@ -94,6 +130,8 @@ class UserSession: ObservableObject {
         // Clear local SQLite cache (Conversations, Messages, Meetings, MyCalendar, VocabSheets, VocabCards, Profiles)
         SQLiteManager.shared.clearAllLocalCaches()
         // isLoggedIn will already be set to false by clearSession()
+        LoggerService.shared.log(.info, "Local SQLite caches cleared after logout", category: LogCategory.auth)
+
     }
 
 }

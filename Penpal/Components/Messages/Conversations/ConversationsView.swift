@@ -18,7 +18,7 @@ struct ConversationView: View {
                 NavigationLink(destination: MessagesView(viewModel: MessagesViewModel(), conversationId: conversation.id)) {
                     HStack {
                         // MARK: - Profile Image (TODO: Fetch from database)
-                        AsyncImage(url: URL(string: conversation.penpalProfileImage))
+                        AsyncImage(url: URL(string: conversation.penpalProfileImage)) //cant use this: penpalProfileImage
                             .frame(width: 40, height: 40)
                             .clipShape(Circle())
 

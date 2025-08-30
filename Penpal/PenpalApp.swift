@@ -9,8 +9,7 @@ import SwiftUI
 import Firebase
 @main
 struct PenpalApp: App {
-    @StateObject private var userSession = UserSession()
-    
+    @StateObject private var userSession = UserSession.shared  
     init() {
         // Initialize Firebase
         FirebaseApp.configure()
@@ -18,6 +17,7 @@ struct PenpalApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(userSession)
         }
     }
 }

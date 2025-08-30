@@ -1,18 +1,26 @@
-import Foundation
+//  VocabSheetModel.swift
+//  Penpal
+//
+//  Created by Austin William Tucker on 11/29/24.
+//
 
-class VocabSheetModel: Identifiable, Codable {
+import Foundation
+import FirebaseFirestore
+import FirebaseFirestoreSwift
+
+struct VocabSheetModel: Identifiable, Codable {
     
-    var id: String
+    @DocumentID var id: String? // The Firestore document ID is automatically handled here
     var name: String
-    var createdBy: String // Profile ID
+    var createdBy: String
     var totalCards: Int
     var lastReviewed: Date?
     var lastUpdated: Date
     var createdAt: Date
-    var isSynced: Bool // isSynced is equal to whether
+    var isSynced: Bool
     
-    // Initializer to create a VocabSheetModel instance
-    init(id: String, name: String, createdBy: String, totalCards: Int, lastReviewed: Date?, lastUpdated: Date, createdAt: Date, isSynced: Bool) {
+    // An empty initializer is required for Firestore's automatic decoding
+    init(id: String? = nil, name: String, createdBy: String, totalCards: Int, lastReviewed: Date?, lastUpdated: Date, createdAt: Date, isSynced: Bool) {
         self.id = id
         self.name = name
         self.createdBy = createdBy
@@ -21,41 +29,6 @@ class VocabSheetModel: Identifiable, Codable {
         self.lastUpdated = lastUpdated
         self.createdAt = createdAt
         self.isSynced = isSynced
-    }
-    
-    // MARK: - Convert to Firestore
-    // Converts the model into a dictionary format suitable for Firestore storage
-    func toFireStoreData() -> [String: Any] {
-        return [
-            "id": id,
-            "name": name,
-            "createdBy": createdBy,
-            "totalCards": totalCards,
-            "lastReviewed": lastReviewed?.timeIntervalSince1970 ?? NSNull(), // Store as Unix timestamp
-            "lastUpdated": lastUpdated.timeIntervalSince1970,
-            "createdAt": createdAt.timeIntervalSince1970,
-            "isSynced": isSynced
-        ]
-    }
-    // MARK: - Convert from Firestore Format
-    // Initializes a VocabSheetModel from Firestore dictionary data
-    static func fromFireStoreData(_ data: [String: Any]) -> VocabSheetModel? {
-        guard let id = data["id"] as? String,
-              let name = data["name"] as? String,
-              let createdBy = data["createdBy"] as? String,
-              let totalCards = data["totalCards"] as? Int,
-              let lastUpdatedTimestamp = data["lastUpdated"] as? Double,
-              let createdAtTimestamp = data["createdAt"] as? Double,
-              let isSynced = data["isSynced"] as? Bool else {
-            return nil
-        }
-        
-        // Convert optional lastReviewed timestamp if it exists
-        let lastReviewedTimestamp = data["lastReviewed"] as? Double
-        let lastReviewed = lastReviewedTimestamp != nil ? Date(timeIntervalSince1970: lastReviewedTimestamp!) : nil
-        // Convert each Firestore dictionary back into VocabCardModel objects
-
-        return VocabSheetModel(id: id, name: name, createdBy: createdBy, totalCards: totalCards, lastReviewed: lastReviewed, lastUpdated: Date(timeIntervalSince1970: lastUpdatedTimestamp), createdAt: Date(timeIntervalSince1970: createdAtTimestamp), isSynced: isSynced)
     }
     
     // MARK: - Convert to SQLite
@@ -113,5 +86,5 @@ class VocabSheetModel: Identifiable, Codable {
             isSynced: isSynced
         )
     }
-
 }
+

@@ -23,11 +23,14 @@ class MessagesService {
     // MARK: - Properties
     /// Reference to the Firebase Realtime Database.
     private var databaseRef: DatabaseReference
+    private let category = "Message Service"
     
     // MARK: - Init
     /// Initializes the service and sets up a reference to the database.
     init() {
         self.databaseRef = Database.database().reference()
+        LoggerService.shared.log(.info, "Initialized MessagesService", category: category)
+
     }
     
     // MARK: - Fetch Messages (Real-Time Listener)
@@ -37,6 +40,7 @@ class MessagesService {
     ///   - completion: A closure that returns an array of `MessagesModel` objects.
     func fetchMessages(for conversationId: String, completion: @escaping (Result<[MessagesModel], Error>) -> Void) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
+        LoggerService.shared.log(.info, "Setting up real-time listener for conversationId: \(conversationId)", category: category)
 
         // Observe real-time updates to the messages in the conversation.
         messagesRef.observe(.value, with: { snapshot in
@@ -52,11 +56,15 @@ class MessagesService {
                    let type = messageDict["type"] as? String {
                     let message = MessagesModel(id: child.key, senderId: senderId, text: text, sentAt: sentAt, isRead: isRead, type: type)
                     messages.append(message)
+                } else {
+                    LoggerService.shared.log(.warning, "Failed to parse message from snapshot: \(child.key)", category: category)
+
                 }
             }
-
+            LoggerService.shared.log(.debug, "Fetched \(messages.count) messages for conversationId: \(conversationId)", category: category)
             completion(.success(messages.sorted(by: { $0.sentAt < $1.sentAt })))
         }, withCancel: { error in
+            LoggerService.shared.log(.error, "Failed to fetch messages for conversationId: \(conversationId): \(error.localizedDescription)", category: category)
             completion(.failure(error))
         })
     }
@@ -81,6 +89,9 @@ class MessagesService {
         let messageId = messagesRef.childByAutoId().key
         
         guard let messageId = messageId else {
+            let errorDescription = "Failed to generate message ID."
+            LoggerService.shared.log(.error, errorDescription, category: category)
+                    
             completion(.failure(NSError(domain: "MessageService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to generate message ID."])))
             return
         }
@@ -92,11 +103,14 @@ class MessagesService {
             "isRead": false,
             "type": type
         ]
-        
+        LoggerService.shared.log(.info, "Sending message with ID: \(messageId) in conversationId: \(conversationId)", category: category)
+        LoggerService.shared.log(.debug, "Message content: \(messageData)", category: category)
         messagesRef.child(messageId).setValue(messageData) { error, _ in
             if let error = error {
+                LoggerService.shared.log(.error, "Failed to send message: \(error.localizedDescription)", category: category)
                 completion(.failure(error))
             } else {
+                LoggerService.shared.log(.info, "Successfully sent message with ID: \(messageId)", category: category)
                 completion(.success(()))
             }
         }
@@ -110,7 +124,15 @@ class MessagesService {
     ///   - messageId: The ID of the message to mark as read.
     func markMessageAsRead(conversationId: String, messageId: String) {
         let messageRef = databaseRef.child("conversations").child(conversationId).child("messages").child(messageId)
-        messageRef.updateChildValues(["isRead": true]) // Mark the message as read.
+        LoggerService.shared.log(.info, "Attempting to mark message '\(messageId)' as read in conversation '\(conversationId)'", category: category)
+        // Mark the message as read.
+        messageRef.updateChildValues(["isRead": true]) { error, _ in
+            if let error = error {
+                LoggerService.shared.log(.error, "Failed to mark message '\(messageId)' as read: \(error.localizedDescription)", category: category)
+            } else {
+                LoggerService.shared.log(.debug, "Successfully marked message '\(messageId)' as read", category: category)
+            }
+        }
     }
     
     // MARK: - Remove Listener
@@ -119,6 +141,7 @@ class MessagesService {
     /// - Parameter conversationId: The ID of the conversation to stop listening for updates.
     func removeListener(for conversationId: String) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
+        LoggerService.shared.log(.info, "Removing real-time listener for conversation '\(conversationId)'", category: category)
         messagesRef.removeAllObservers() // Stop listening for real-time changes.
     }
     
@@ -130,6 +153,8 @@ class MessagesService {
         limit: UInt = 20, // Limit to the number of messages to fetch at once
         completion: @escaping ([MessagesModel]) -> Void // Completion handler that returns the messages
     ) {
+        LoggerService.shared.log(.info, "Fetching paginated messages for conversation '\(conversationId)' (limit: \(limit), before: \(lastMessageTimestamp ?? -1))", category: category)
+
         // Start building the query to fetch messages from Firebase
         var query = databaseRef
             .child("conversations") // Access the "conversations" node
@@ -142,7 +167,7 @@ class MessagesService {
         if let lastTimestamp = lastMessageTimestamp {
             // Subtract a small delta (1 millisecond) to avoid fetching the message with lastTimestamp again, preventing duplicates
             let adjustedTimestamp = lastTimestamp - 1
-            
+            LoggerService.shared.log(.debug, "Applying pagination endAt timestamp: \(adjustedTimestamp)", category: category)
             query = query.queryEnding(atValue: adjustedTimestamp) // Only fetch messages strictly older than lastTimestamp
         }
 
@@ -170,9 +195,10 @@ class MessagesService {
                     messages.append(message) // Add the message to the array
                 }
             }
-
+            LoggerService.shared.log(.info, "Fetched \(messages.count) messages for conversation '\(conversationId)'", category: category)
             // Sort messages from oldest to newest based on sentAt before returning them
             completion(messages.sorted(by: { $0.sentAt < $1.sentAt }))
+
         }
     }
 
@@ -197,6 +223,8 @@ class MessagesService {
         // MARK: - Real-time Listener for New Children (Messages)
         // This observes only newly added child nodes under "messages"
         // (i.e., it won’t trigger for existing messages already in the database).
+        LoggerService.shared.log(.info, "Listening for new messages in conversation '\(conversationId)'", category: category)
+
         messagesRef.observe(.childAdded) { snapshot in
             
             // Each snapshot represents one new message document
@@ -214,13 +242,16 @@ class MessagesService {
                 
                 // Convert the timestamp to String (you can also format it into Date if needed)
                 let message = MessagesModel(id: snapshot.key, senderId: senderId, text: text, sentAt: sentAt, isRead: isRead, type: type)
+                LoggerService.shared.log(.debug, "New message observed in conversation '\(conversationId)': id=\(id), senderId=\(senderId), type=\(type)", category: category)
 
                 // Callback with the New Message
                 // Call the passed-in closure with the new message
                 onNewMessage(message)
+            } else {
+                LoggerService.shared.log(.warning, "Malformed message snapshot received in conversation '\(conversationId)'", category: category)
             }
         }, withCancel: { error in
-            print("Error observing new messages: \(error.localizedDescription)")
+            LoggerService.shared.log(.error, "Failed to observe new messages in conversation '\(conversationId)': \(error.localizedDescription)", category: category)
             // Optional: log to a service, show an alert, trigger retry, etc.
         })
     }
@@ -232,7 +263,7 @@ class MessagesService {
     ///   - onMessageUpdated: Callback with the updated message.
     func listenForMessageUpdates(conversationId: String, onMessageUpdated: @escaping (MessagesModel) -> Void) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
-
+        LoggerService.shared.log(.info, "Listening for message updates in conversation '\(conversationId)'", category: category)
         messagesRef.observe(.childChanged) { snapshot in
             if let messageDict = snapshot.value as? [String: Any],
                let id = snapshot.key as? String,
@@ -246,7 +277,10 @@ class MessagesService {
                 let sentAtDate = Date(timeIntervalSince1970: sentAtTimestamp / 1000)
 
                 let message = MessagesModel(id: id, senderId: senderId, text: text, sentAt: sentAtDate, isRead: isRead, type: type)
+                LoggerService.shared.log(.debug, "Message updated in conversation '\(conversationId)': id=\(id), isRead=\(isRead)", category: category)
                 onMessageUpdated(message)
+            } else {
+                LoggerService.shared.log(.warning, "Received malformed updated message snapshot in conversation '\(conversationId)'", category: category)
             }
         }
     }
@@ -259,9 +293,10 @@ class MessagesService {
     ///   - onMessageDeleted: Callback with the ID of the deleted message.
     func listenForDeletedMessages(conversationId: String, onMessageDeleted: @escaping (String) -> Void) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
-
+        LoggerService.shared.log(.info, "Listening for deleted messages in conversation '\(conversationId)'", category: category)
         messagesRef.observe(.childRemoved) { snapshot in
             let deletedMessageId = snapshot.key
+            LoggerService.shared.log(.debug, "Message deleted in conversation '\(conversationId)': id=\(deletedMessageId)", category: category)
             onMessageDeleted(deletedMessageId)
         }
     }
@@ -274,16 +309,21 @@ class MessagesService {
     ///   - statusUpdateHandler: Closure called with the message ID and new status whenever a status update occurs.
     func observeMessagesStatusUpdates(conversationId: String, statusUpdateHandler: @escaping (String, MessageStatus) -> Void) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
-        
+        LoggerService.shared.log(.info, "Observing status updates in conversation '\(conversationId)'", category: category)
         // Listen for changes to any child node (message) under "messages"
         messagesRef.observe(.childChanged) { snapshot in
-            guard let dict = snapshot.value as? [String: Any] else { return }
+            guard let dict = snapshot.value as? [String: Any] else {
+                LoggerService.shared.log(.warning, "Failed to parse message data in conversation '\(conversationId)' for status update", category: category)
+                return }
             
             // Extract only the "status" field from the updated message dictionary
             if let statusString = dict["status"] as? String,
                let status = MessageStatus(rawValue: statusString) {
                 let messageId = snapshot.key
+                LoggerService.shared.log(.debug, "Status update for message '\(messageId)' in conversation '\(conversationId)': \(status)", category: category)
                 statusUpdateHandler(messageId, status) // Callback with just ID and status
+            } else {
+                LoggerService.shared.log(.warning, "Invalid or missing status field in message '\(snapshot.key)'", category: category)
             }
         }
     }
@@ -297,7 +337,7 @@ class MessagesService {
     ///   - onMessagesFetched: Callback with an array of all messages.
     func fetchAllMessages(conversationId: String, onMessagesFetched: @escaping ([MessagesModel]) -> Void) {
         let messagesRef = databaseRef.child("conversations").child(conversationId).child("messages")
-
+        LoggerService.shared.log(.info, "Fetching all messages for conversation '\(conversationId)'", category: category)
         messagesRef.observeSingleEvent(of: .value) { snapshot in
             var messages: [MessagesModel] = []
 
@@ -318,9 +358,11 @@ class MessagesService {
                         type: type
                     )
                     messages.append(message)
+                } else {
+                    LoggerService.shared.log(.warning, "Skipping invalid or malformed message entry in conversation '\(conversationId)'", category: category)
                 }
             }
-
+            LoggerService.shared.log(.info, "Fetched \(messages.count) messages from conversation '\(conversationId)'", category: category)
             onMessagesFetched(messages)
         }
     }
@@ -342,10 +384,10 @@ class MessagesService {
         messageRef.updateData(["isRead": true]) { error in
             if let error = error {
                 // Log if the update fails
-                print("Failed to mark message as read: \(error.localizedDescription)")
+                LoggerService.shared.log(.error, "Failed to mark message \(messageId) as read: \(error.localizedDescription)", category: category)
             } else {
                 // Confirmation log for debugging
-                print("Message \(messageId) marked as read.")
+                LoggerService.shared.log(.info, "Message \(messageId) marked as read.", category: category)
             }
         }
     }

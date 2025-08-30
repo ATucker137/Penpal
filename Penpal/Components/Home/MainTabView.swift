@@ -4,20 +4,36 @@
 //
 //  Created by Austin William Tucker on 1/20/25.
 //
+/**
+ MainTabView.swift
 
+ This is the **Parent View** of the Penpal app which manages the primary navigation structure using a **TabView**. It serves as the root container that holds five main sections of the app:
+ 
+ 1. **Home** - User’s feed or dashboard.
+ 2. **Penpals** - List of potential or confirmed Penpal matches.
+ 3. **Messages** - User’s conversations and message threads.
+ 4. **Study** - Vocabulary sheets and study tools.
+ 5. **Profile** - User profile and settings.
+ 
+ Shared state like the currently selected tab (`selectedTab`) and navigation helpers (e.g., `lastOpenedMessageId` for deep-linking into a message) are stored here and passed down as Bindings to child views for inter-tab communication and navigation actions.
+
+ This view should be launched as the root view when the app starts.
+
+**/
+ 
 import SwiftUI
 
 // TODO: - The Image Names like house.fill can be reached here: https://developer.apple.com/sf-symbols/
 // TODO: - Pass in the binding into each
-class MainTabView: View {
+struct MainTabView: View {
     
-    @State private var selectedTab = Tab .home
+    @State private var selectedTab = Tab.home
     @State private var lastOpenedMessageId: String? = nil // Start empty
-
+    @StateObject private var homeVM = HomeViewModel()
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView(selectedTab: $selectedTab)
+            HomeView(homeViewModel: homeVM, selectedTab: $selectedTab)
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
@@ -52,5 +68,5 @@ class MainTabView: View {
 
 
 enum Tab {
-    case home, penpals,messages, study, profile
+    case home, penpals, messages, study, profile
 }

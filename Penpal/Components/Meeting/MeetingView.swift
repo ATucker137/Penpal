@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct MeetingView: View {
-    @StateObject private var viewModel = MeetingViewModel()
-    @EnvironmentObject var userSession: UserSession
+    @StateObject private var viewModel = MeetingViewModel() // StateOObject because MeetingView does own MEetingViewModel
+    @EnvironmentObject var penpalViewModel: PenpalsViewModel
     //Acts as a back button
     @Environment(\.dismiss) private var dismiss // Dismiss the current view
     @Binding var selectedTab: Tab
     @State private var showTopicView: Bool = false // State to trigger navigation
     @State private var showScheduleView: Bool = false // State to show ScheduleMeetingTimeView
     @State private var rescheduledDate: Date = Date() // Store the rescheduled date
-    @State private var meetingId: String // This will come from the initializer
+    private var meetingId: String // This will come from the initializer
 
     
     var body: some View {
@@ -81,19 +81,23 @@ struct MeetingView: View {
                 }
     }
     
-    extension DateFormatter {
-        static let shortDate: DateFormatter = {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .short
-            formatter.timeStyle = .short
-            return formatter
-        }
-    }
+    
     
     struct MeetingView_Previews: PreviewProvider {
         static var previews: some View {
-            return MeetingView(userSession: <#T##UserSession#>, meetingId: <#T##String#>)
+            MeetingView(selectedTab: .constant(.home), meetingId: "mockMeetingId")
+                .environmentObject(UserSession())         // preview-only stub
+                .environmentObject(PenpalsViewModel())    // preview-only stub
         }
+    }
+
+}
+extension DateFormatter {
+    static let shortDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
     }
 }
 

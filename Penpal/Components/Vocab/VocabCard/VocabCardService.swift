@@ -6,88 +6,93 @@
 //
 import Foundation
 import FirebaseFirestore
+import FirebaseFirestoreSwift
 import Combine
 
 class VocabCardService {
     private var db = Firestore.firestore()
-    
+    private let category = "VocabCard Service"
+
     // MARK: - Fetch Vocab Cards for a specific Sheet
-    func fetchVocabCards(for sheetId: String, completion: @escaping (Result<[VocabCardModel], Error>) -> Void) {
-        db.collection("vocabSheets")
-            .document(sheetId)
-            .collection("vocabCards")
-            .getDocuments { snapshot, error in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
-                
-                guard let documents = snapshot?.documents else {
-                    completion(.failure(NSError(domain: "VocabCardService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No vocab cards found."])))
-                    return
-                }
-                
-                let cards = documents.compactMap { document -> VocabCardModel? in
-                    try? document.data(as: VocabCardModel.self)
-                }
-                completion(.success(cards))
+    /// Fetches all vocabulary cards for a given vocabulary sheet.
+    /// - Parameter sheetId: The ID of the vocabulary sheet.
+    /// - Returns: An array of `VocabCardModel` objects.
+    func fetchVocabCards(for sheetId: String) async throws -> [VocabCardModel] {
+        do {
+            let snapshot = try await db.collection("vocabSheets")
+                .document(sheetId)
+                .collection("vocabCards")
+                .getDocuments()
+
+            // Map the documents to the VocabCardModel
+            let cards = try snapshot.documents.compactMap { document in
+                try document.data(as: VocabCardModel.self)
             }
+
+            LoggerService.shared.log(.info, "✅ Successfully fetched \(cards.count) vocab cards for sheetId: \(sheetId)", category: self.category)
+            return cards
+        } catch {
+            LoggerService.shared.log(.error, "❌ Failed to fetch vocab cards for sheetId: \(sheetId) — \(error.localizedDescription)", category: self.category)
+            throw error
+        }
     }
     
     // MARK: - Add a New Vocab Card
-    func addVocabCard(to sheetId: String, card: VocabCardModel) -> AnyPublisher<Void, Error> {
-        let cardData = try? Firestore.Encoder().encode(card)
-        
-        return Future { promise in
-            self.db.collection("vocabSheets")
+    /// Adds a new vocabulary card to a specific sheet.
+    /// - Parameters:
+    ///   - card: The `VocabCardModel` object to be added.
+    ///   - sheetId: The ID of the vocabulary sheet.
+    func addVocabCard(to sheetId: String, card: VocabCardModel) async throws {
+        do {
+            let _ = try await db.collection("vocabSheets")
                 .document(sheetId)
                 .collection("vocabCards")
-                .addDocument(data: cardData ?? [:]) { error in
-                    if let error = error {
-                        promise(.failure(error))
-                    } else {
-                        promise(.success(()))
-                    }
-                }
+                .addDocument(from: card)
+
+            LoggerService.shared.log(.info, "✅ Added vocab card to sheetId: \(sheetId)", category: self.category)
+        } catch {
+            LoggerService.shared.log(.error, "❌ Failed to add vocab card to sheetId: \(sheetId) — \(error.localizedDescription)", category: self.category)
+            throw error
         }
-        .eraseToAnyPublisher()
     }
     
     // MARK: - Update a Vocab Card
-    func updateVocabCard(_ card: VocabCardModel, sheetId: String) -> AnyPublisher<Void, Error> {
-        let cardData = try? Firestore.Encoder().encode(card)
-        
-        return Future { promise in
-            self.db.collection("vocabSheets")
+    /// Updates an existing vocabulary card in a specific sheet.
+    /// - Parameters:
+    ///   - card: The `VocabCardModel` object containing the updated data.
+    ///   - sheetId: The ID of the vocabulary sheet.
+    func updateVocabCard(_ card: VocabCardModel, sheetId: String) async throws {
+        do {
+            try await db.collection("vocabSheets")
                 .document(sheetId)
                 .collection("vocabCards")
                 .document(card.id)
-                .setData(cardData ?? [:], merge: true) { error in
-                    if let error = error {
-                        promise(.failure(error))
-                    } else {
-                        promise(.success(()))
-                    }
-                }
+                .setData(from: card, merge: true)
+
+            LoggerService.shared.log(.info, "✅ Updated vocab card \(card.id) in sheetId: \(sheetId)", category: self.category)
+        } catch {
+            LoggerService.shared.log(.error, "❌ Failed to update vocab card \(card.id) in sheetId: \(sheetId) — \(error.localizedDescription)", category: self.category)
+            throw error
         }
-        .eraseToAnyPublisher()
     }
     
     // MARK: - Delete a Vocab Card
-    func deleteVocabCard(_ cardId: String, from sheetId: String) -> AnyPublisher<Void, Error> {
-        return Future { promise in
-            self.db.collection("vocabSheets")
+    /// Deletes a vocabulary card from a specific sheet.
+    /// - Parameters:
+    ///   - cardId: The ID of the vocabulary card to delete.
+    ///   - sheetId: The ID of the vocabulary sheet.
+    func deleteVocabCard(_ cardId: String, from sheetId: String) async throws {
+        do {
+            try await db.collection("vocabSheets")
                 .document(sheetId)
                 .collection("vocabCards")
                 .document(cardId)
-                .delete { error in
-                    if let error = error {
-                        promise(.failure(error))
-                    } else {
-                        promise(.success(()))
-                    }
-                }
+                .delete()
+
+            LoggerService.shared.log(.info, "✅ Deleted vocab card \(cardId) from sheetId: \(sheetId)", category: self.category)
+        } catch {
+            LoggerService.shared.log(.error, "❌ Failed to delete vocab card \(cardId) from sheetId: \(sheetId) — \(error.localizedDescription)", category: self.category)
+            throw error
         }
-        .eraseToAnyPublisher()
     }
 }

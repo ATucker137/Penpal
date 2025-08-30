@@ -17,6 +17,7 @@ class ConversationsService {
     
     private let db = Firestore.firestore() // Reference to Firestore database
     private var listener: ListenerRegistration? // Listener for real-time updates on conversations
+    private let category = "Conversation Service"
     
     deinit {
         removeListener() // Ensure listener is removed when instance is deallocated
@@ -31,7 +32,7 @@ class ConversationsService {
             .order(by: "lastUpdated", descending: true) // Orders conversations by most recent activity
             .addSnapshotListener { snapshot, error in
                 guard let documents = snapshot?.documents else {
-                    print("Error fetching conversations: \(error?.localizedDescription ?? "Unknown error")")
+                    LoggerService.shared.log(.error, "Error fetching conversations: \(error?.localizedDescription ?? "Unknown error")", category: self.category)
                     return
                 }
                 
@@ -39,6 +40,7 @@ class ConversationsService {
                 let conversations = documents.compactMap { doc -> ConversationsModel? in
                     try? doc.data(as: ConversationsModel.self)
                 }
+                LoggerService.shared.log(.info, "Fetched \(conversations.count) conversations for user \(userId)", category: self.category)
                 completion(conversations) // Returns fetched conversations
             }
     }
@@ -47,6 +49,7 @@ class ConversationsService {
     func removeListener() {
         listener?.remove() // Removes Firestore listener
         listener = nil // Ensures it's properly deallocated
+        LoggerService.shared.log(.debug, "Firestore listener removed", category: category)
     }
     
     // MARK: - Placeholder function for searching within conversations
@@ -74,7 +77,7 @@ class ConversationsService {
         do {
             try batch.setData(from: newConversation, forDocument: conversationRef) // Save conversation document
         } catch {
-            print("Error encoding conversation: \(error.localizedDescription)")
+            LoggerService.shared.log(.error, "Error encoding conversation: \(error.localizedDescription)", category: category)
             completion(nil)
             return
         }
@@ -86,10 +89,10 @@ class ConversationsService {
         // Commit batch write to Firestore
         batch.commit { error in
             if let error = error {
-                print("Error creating conversation: \(error.localizedDescription)")
+                LoggerService.shared.log(.error, "Error creating conversation: \(error.localizedDescription)", category: self.category)
                 completion(nil)
             } else {
-                print("Conversation successfully created.")
+                LoggerService.shared.log(.info, "Successfully created conversation \(conversationId)", category: self.category)
                 completion(conversationId)
             }
         }
@@ -105,9 +108,9 @@ class ConversationsService {
             "lastUpdated": Timestamp(date: lastUpdated)
         ]) { error in
             if let error = error {
-                print("Error updating conversation last message: \(error.localizedDescription)")
+                LoggerService.shared.log(.error, "Error updating conversation \(conversationId): \(error.localizedDescription)", category: self.category)
             } else {
-                print("Successfully updated conversation last message.")
+                LoggerService.shared.log(.info, "Updated lastMessage for conversation \(conversationId)", category: self.category)
             }
         }
     }
@@ -124,13 +127,13 @@ class ConversationsService {
                   let data = conversationSnapshot.data(),
                   let participants = data["participants"] as? [String]
             else {
-                print("Conversation data missing or malformed.")
+                LoggerService.shared.log(.error, "Conversation data missing or malformed.", category: self.category)
                 return nil
             }
 
             // Ensure the current user is part of the conversation
             guard participants.contains(userId) else {
-                print("User not a participant in this conversation.")
+                LoggerService.shared.log(.error, "User \(userId) not a participant in conversation \(conversationId).", category: self.category)
                 return nil
             }
 
@@ -150,15 +153,19 @@ class ConversationsService {
             // If both users have deleted the conversation, delete it entirely
             if Set(updatedDeletedFor).isSuperset(of: Set(participants)) {
                 transaction.deleteDocument(conversationRef)
+                LoggerService.shared.log(.info, "Both users deleted conversation \(conversationId); deleting from Firestore.", category: self.category)
+
+            } else {
+                LoggerService.shared.log(.info, "Marked conversation \(conversationId) as deleted for user \(userId).", category: self.category)
             }
 
             return nil
         }, completion: { (_, error) in
             if let error = error {
-                print("Failed to delete conversation: \(error.localizedDescription)")
+                LoggerService.shared.log(.error, "Failed to delete conversation: \(error.localizedDescription)", category: self.category)
                 completion(false)
             } else {
-                print("Conversation deletion handled successfully.")
+                LoggerService.shared.log(.info, "Successfully handled deletion for conversation \(conversationId)", category: self.category)
                 completion(true)
             }
         })

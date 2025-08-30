@@ -25,7 +25,7 @@ struct NotificationsView: View {
 }
 
 struct NotificationRow: View {
-    let notification: NotificationModel
+    let notification: NotificationsModel
 
     var body: some View {
         HStack {

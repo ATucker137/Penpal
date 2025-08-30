@@ -26,6 +26,8 @@ class MessagesViewModel: ObservableObject {
     private let messageService = MessagesService() // The service layer that handles Firebase interactions.
     private let sqliteManager = SQLiteManager()
     private var cancellables = Set<AnyCancellable>() // Stores Combine subscriptions to manage memory.
+    private let category = "Message ViewModel"
+
     init(conversationId: String) {
         self.conversationId = conversationId
     }
@@ -36,26 +38,28 @@ class MessagesViewModel: ObservableObject {
    
     func fetchMessages() {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "conversationId is not set.", category: category)
                 return
             }
         let cachedMessages = self.sqliteManager.fetchMessagesForConversation(conversationId: conversationId)
         let sortedCached = cachedMessages.sorted { $0.sentAt < $1.sentAt }
         self.messages = sortedCached
         self.oldestMessageTimestamp = sortedCached.first?.sentAt
-
+        LoggerService.shared.log(.info, "Fetching messages from Firebase for conversation: \(conversationId)", category: category)
         messageService.fetchMessages(for: conversationId) { [weak self] fetchedMessages in
             DispatchQueue.main.async {
                 guard let self = self else { return }
 
                 if fetchedMessages.isEmpty {
                     //  No Firebase messages → fall back to SQLite
+                    LoggerService.shared.log(.info, "No messages fetched from Firebase, falling back to SQLite.", category: category)
                     let localMessages = self.sqliteManager.fetchMessagesForConversation(conversationId: conversationId)
                     let sorted = localMessages.sorted { $0.sentAt < $1.sentAt }
                     self.messages = sorted
                     self.oldestMessageTimestamp = sorted.first?.sentAt
                     self.hasMoreMessages = false // Assume local storage is finite
                 } else {
+                    LoggerService.shared.log(.info, "Fetched \(fetchedMessages.count) messages from Firebase.", category: category)
                     // ✅ Deduplicate against current in-memory list (optional if replacing)
                     let deduped = self.deduplicate(fetchedMessages)
 
@@ -78,7 +82,11 @@ class MessagesViewModel: ObservableObject {
     // Helper to filter out messages that already exist in the current list
     private func deduplicate(_ newMessages: [MessagesModel]) -> [MessagesModel] {
         let existingIds = Set(self.messages.map { $0.id })
-        return newMessages.filter { !existingIds.contains($0.id) }
+        let filteredMessages = newMessages.filter { !existingIds.contains($0.id) }
+            
+            LoggerService.shared.log(.info, "Deduplicating messages: \(newMessages.count) incoming, \(filteredMessages.count) after filtering duplicates.", category: category)
+            
+            return filteredMessages
     }
 
 
@@ -92,7 +100,7 @@ class MessagesViewModel: ObservableObject {
     ///   - type: The message type (default is "text").
     func sendMessage(senderId: String, text: String, type: String = "text") {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "sendMessage failed: conversationId is not set.", category: category)
                 return
             }
         // 1. Create a local "pending" message to immediately show in the UI
@@ -108,9 +116,10 @@ class MessagesViewModel: ObservableObject {
         )
 
         messages.append(tempMessage)
+        LoggerService.shared.log(.info, "Created pending message with ID \(messageId) for conversation \(conversationId).", category: category)
         // ✅ Insert into local cache immediately
         sqliteManager.insertMessage(tempMessage)
-
+        LoggerService.shared.log(.debug, "Inserted pending message into SQLite cache.", category: category)
         // 2. Update status to `.sending` (simulate Firebase upload beginning)
         updateMessageStatus(id: messageId, to: .sending)
 
@@ -120,8 +129,10 @@ class MessagesViewModel: ObservableObject {
                 switch result {
                 case .success:
                     self.updateMessageStatus(id: messageId, to: .sent)
+                    LoggerService.shared.log(.info, "Message \(messageId) sent successfully.", category: category)
                 case .failure:
                     self.updateMessageStatus(id: messageId, to: .failed)
+                    LoggerService.shared.log(.error, "Failed to send message \(messageId): \(error.localizedDescription)", category: category)
                 }
             }
         }
@@ -130,6 +141,9 @@ class MessagesViewModel: ObservableObject {
     private func updateMessageStatus(id: String, to newStatus: MessageStatus) {
         if let index = messages.firstIndex(where: { $0.id == id }) {
             messages[index].status = newStatus
+            LoggerService.shared.log(.debug, "Updated message \(id) status to \(newStatus.rawValue).", category: category)
+        } else {
+            LoggerService.shared.log(.warning, "Attempted to update status for unknown message ID \(id).", category: category)
         }
     }
 
@@ -141,9 +155,10 @@ class MessagesViewModel: ObservableObject {
     ///   - messageId: The ID of the message to mark as read.
     func markMessageAsRead( messageId: String) {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "markMessageAsRead failed: conversationId is not set.", category: category)
                 return
             }
+        LoggerService.shared.log(.info, "Marking message \(messageId) as read in conversation \(conversationId).", category: category)
         messageService.markMessageAsRead(conversationId: conversationId, messageId: messageId)
     }
     
@@ -153,13 +168,18 @@ class MessagesViewModel: ObservableObject {
     ///
     /// Note: This only updates the local state; syncing to Firebase should be done separately if needed.
     func markAllAsRead() {
+        LoggerService.shared.log(.info, "Marking all unread messages as read locally and remotely.", category: category)
         for message in messages where !message.isRead {
+            LoggerService.shared.log(.debug, "Marking message \(message.id) as read locally.", category: category)
+
             // Update the message's read status in the local SQLite store
             sqliteManager.markMessageAsReadLocally(messageId: message.id)
             
             // Optionally: Also mark this message as read in Firebase
             // You could call `markMessageAsRead(conversationId: ..., messageId: message.id)` here
         }
+        LoggerService.shared.log(.info, "Completed marking all unread messages as read.", category: category)
+
     }
 
 
@@ -168,9 +188,10 @@ class MessagesViewModel: ObservableObject {
     /// This is important for memory management and preventing unnecessary data fetching.
     func removeListener() {
         guard let conversationId = conversationId else {
-            print("⚠️ Cannot remove listener – conversationId is nil")
+            LoggerService.shared.log(.warning, "Cannot remove listener – conversationId is nil", category: category)
             return
         }
+        LoggerService.shared.log(.info, "Removing message listener for conversation '\(conversationId)'", category: category)
         messageService.removeListener(for: conversationId)
     }
 
@@ -183,14 +204,17 @@ class MessagesViewModel: ObservableObject {
     ///   - completion: A closure returning a sorted array of messages fetched from Firebase.
     func fetchMessagesPaginated( lastMessageTimestamp: TimeInterval, completion: @escaping ([MessagesModel]) -> Void) {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "fetchMessagesPaginated failed: conversationId is not set.", category: category)
                 return
             }
+        LoggerService.shared.log(.info, "Fetching paginated messages for conversation '\(conversationId)' before timestamp \(lastMessageTimestamp)", category: category)
+
         // Request a batch of messages from the backend that are older than the current oldest message.
         messageService.fetchMessagesPaginated(conversationId: conversationId, lastMessageTimestamp: lastMessageTimestamp) { messages in
             DispatchQueue.main.async {
-                // Sort the messages in chronological order (oldest to newest) before returning them.
-                completion(messages.sorted { $0.sentAt < $1.sentAt })
+                let sortedMessages = messages.sorted { $0.sentAt < $1.sentAt }
+                LoggerService.shared.log(.info, "Fetched \(sortedMessages.count) paginated messages for conversation '\(conversationId)'", category: category)
+                completion(sortedMessages)
             }
         }
     }
@@ -202,27 +226,36 @@ class MessagesViewModel: ObservableObject {
     /// - Parameter currentTopMessage: The message currently at the top of the chat list (i.e., most scrolled up).
     func loadMoreMessagesIfNeeded(currentTopMessage: MessagesModel) {
         // If there are no more messages to load, exit early.
-        guard hasMoreMessages else { return }
+        guard hasMoreMessages else {
+            LoggerService.shared.log(.info, "No more messages to load.", category: category)
+            return
+        }
         
         // If we don’t know the timestamp of the oldest message yet, exit early.
-        guard let oldestTimestamp = oldestMessageTimestamp else { return }
+        guard let oldestTimestamp = oldestMessageTimestamp else {
+            LoggerService.shared.log(.info, "Oldest message timestamp unknown, cannot load more messages.", category: category)
+            return }
 
-        guard let storedConversationId = conversationId else { return } //  Use stored conversationId
+        guard let storedConversationId = conversationId else {
+            LoggerService.shared.log(.error, "Conversation ID is nil, cannot load more messages.", category: category)
+            return } //  Use stored conversationId
         
         // Only load more messages if the user has scrolled to the very top of the list.
         // This prevents us from fetching more every time the user scrolls, even slightly.
         if currentTopMessage.id == messages.first?.id {
-            
+            LoggerService.shared.log(.info, "User scrolled to top. Fetching more messages older than timestamp \(oldestTimestamp) for conversation '\(storedConversationId)'.", category: category)
             // TODO: Replace `...` with a stored `conversationId` property or pass it into the function.
             fetchMessagesPaginated(conversationId: storedConversationId, lastMessageTimestamp: oldestTimestamp) { newMessages in
 
                 // Insert the newly fetched messages at the beginning of the messages array. While filtering out duplicates
                 let uniqueMessages = deduplicate(newMessages)
+                LoggerService.shared.log(.info, "Fetched \(newMessages.count) messages, \(uniqueMessages.count) are unique.", category: category)
                 self.messages.insert(contentsOf: uniqueMessages, at: 0)
 
                 // Update the oldest known timestamp with the earliest message in this new batch.
                 if let newOldest = newMessages.first?.sentAt {
                     self.oldestMessageTimestamp = newOldest
+                    LoggerService.shared.log(.info, "Updated oldest message timestamp to \(newOldest).", category: category)
                 }
 
                 // Optionally update hasMoreMessages based on newMessages.count if you know the page size limit
@@ -239,6 +272,7 @@ class MessagesViewModel: ObservableObject {
     ///   - conversationId: The ID of the conversation containing the message.
     ///   - messageId: The unique identifier of the message to update.
     func markMessageAsDelivered( messageId: String) {
+        LoggerService.shared.log(.info, "Marking message \(messageId) as delivered.", category: category)
         updateMessageStatus(id: messageId, to: .delivered)
         // Optionally, notify backend if additional steps needed.
     }
@@ -249,6 +283,7 @@ class MessagesViewModel: ObservableObject {
     ///
     /// - Parameter messageId: The unique identifier of the message to update.
     func markMessageAsReadLocally(messageId: String) {
+        LoggerService.shared.log(.info, "Marking message \(messageId) as read locally.", category: category)
         updateMessageStatus(id: messageId, to: .read)
     }
     
@@ -259,11 +294,14 @@ class MessagesViewModel: ObservableObject {
     /// - Parameter conversationId: The ID of the conversation to observe.
     func startObservingStatusUpdates() {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "Cannot start observing status updates: conversationId is nil.", category: category)
                 return
             }
+        LoggerService.shared.log(.info, "Starting to observe message status updates for conversation \(conversationId).", category: category)
+
         messageService.observeMessagesStatusUpdates(conversationId: conversationId) { [weak self] messageId, newStatus in
             DispatchQueue.main.async {
+                LoggerService.shared.log(.info, "Received status update for message \(messageId): \(newStatus.rawValue).", category: self?.category ?? "Unknown")
                 self?.updateMessageStatus(id: messageId, to: newStatus)
             }
         }
@@ -279,9 +317,11 @@ class MessagesViewModel: ObservableObject {
     ///   - conversationId: The ID of the conversation the message belongs to.
     func resendMessage(_ message: MessagesModel) {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "Cannot resend message: conversationId is not set.", category: category)
                 return
             }
+        LoggerService.shared.log(.info, "Retrying to send message with id \(message.id).", category: category)
+
         // Optional: Set status to `.sending` so the UI reflects that a retry is in progress.
         // This prevents duplicate retry attempts and gives immediate feedback to the user.
         if let index = messages.firstIndex(where: { $0.id == message.id }) {
@@ -291,11 +331,18 @@ class MessagesViewModel: ObservableObject {
         // Call the sendMessage function again using the same data from the failed message.
         // This reuses your existing logic in the MessageService.
         messageService.sendMessage(
-            conversationId: conversationId,
-            senderId: message.senderId,
-            text: message.text,
-            type: message.type
-        )
+                conversationId: conversationId,
+                senderId: message.senderId,
+                text: message.text,
+                type: message.type
+            ) { result in
+                switch result {
+                case .success:
+                    LoggerService.shared.log(.info, "Message \(message.id) resend succeeded.", category: self.category)
+                case .failure(let error):
+                    LoggerService.shared.log(.error, "Message \(message.id) resend failed: \(error.localizedDescription)", category: self.category)
+                }
+            }
     }
     
     // MARK: - Retry All Failed Messages
@@ -305,12 +352,12 @@ class MessagesViewModel: ObservableObject {
     /// - Parameter conversationId: The ID of the conversation to retry messages for.
     func retryAllFailedMessages() {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "Cannot retry failed messages: conversationId is not set.", category: category)
                 return
             }
         // Filter out all messages with a `.failed` status.
         let failedMessages = messages.filter { $0.status == .failed }
-
+        LoggerService.shared.log(.info, "Retrying \(failedMessages.count) failed messages for conversation \(conversationId).", category: category)
         // Loop through each failed message and try to resend it.
         for message in failedMessages {
             resendMessage(message, conversationId: conversationId)
@@ -322,14 +369,14 @@ class MessagesViewModel: ObservableObject {
     /// - Parameter conversationId: The ID of the conversation whose messages should be printed.
     func printCachedMessages( ) {
         guard let conversationId = self.conversationId else {
-                print("Error: conversationId is not set.")
+            LoggerService.shared.log(.error, "Cannot print cached messages: conversationId is not set.", category: category)
                 return
             }
         // Fetch messages stored locally for this conversation
         let cached = sqliteManager.fetchMessagesForConversation(conversationId: conversationId)
         
         // Print out message texts for quick inspection
-        print("Cached messages: \(cached.map { $0.text })")
+        LoggerService.shared.log(.info, "Cached messages for conversation \(conversationId): \(messageTexts)", category: category)
     }
 
 

@@ -17,7 +17,9 @@ class FirestoreService {
             "lastActive": FieldValue.serverTimestamp()
         ]) { error in
             if let error = error {
-                print("Error updating status: \(error)")
+                LoggerService.shared.log(.error, "Error updating online status for user \(userId): \(error.localizedDescription)", category: LogCategory.firestoreProfile)
+            } else {
+                LoggerService.shared.log(.info, "Successfully updated online status for user \(userId) to \(isOnline)", category: LogCategory.firestoreProfile)
             }
         }
     }
